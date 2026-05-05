@@ -1,0 +1,5 @@
+result
+result-*
+*.bak
+*.backup
+.direnv/
