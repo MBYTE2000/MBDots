@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 # Автоустановка NixOS-конфига из этого репозитория.
-# Запускать с NixOS Live ISO (minimal/graphical). Требует интернет.
+# Запускать с NixOS Live ISO (minimal/graphical, 25.11+). Требует интернет.
 #
 # Использование:
-#   sudo ./install.sh                       # интерактивно (диск, hostname)
-#   DISK=/dev/nvme0n1 HOSTNAME=MB-PC sudo -E ./install.sh
+#   sudo ./install.sh                    # интерактивно (диск, hostname, user, GPU)
+#   DISK=/dev/nvme0n1 HOSTNAME=foo USERNAME=alice GPU=intel sudo -E ./install.sh
+#
+# Переменные:
+#   DISK       — целевое блочное устройство (например /dev/nvme0n1)
+#   HOSTNAME   — networking.hostName (он же ключ в nixosConfigurations.<...>)
+#   USERNAME   — основной пользователь (заменяет 'mbyte' во всех местах)
+#   GPU        — nvidia | intel | amd | none
 #
 # ВНИМАНИЕ: указанный диск будет ПОЛНОСТЬЮ ОЧИЩЕН.
 
@@ -12,8 +18,12 @@ set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISK="${DISK:-}"
-HOSTNAME_TARGET="${HOSTNAME:-MB-PC}"
-USERNAME="${USERNAME:-mbyte}"
+HOSTNAME_TARGET="${HOSTNAME:-}"
+USERNAME_TARGET="${USERNAME:-}"
+GPU="${GPU:-}"
+
+OLD_USER="mbyte"
+OLD_HOST="MB-PC"
 
 log()  { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==>\033[0m %s\n' "$*" >&2; }
@@ -23,7 +33,7 @@ die()  { printf '\033[1;31m==>\033[0m %s\n' "$*" >&2; exit 1; }
 command -v nix >/dev/null || die "nix не найден. Запускай с NixOS Live ISO."
 command -v nixos-install >/dev/null || die "nixos-install не найден. Запускай с NixOS Live ISO."
 
-# --- 1. Выбор диска -----------------------------------------------------------
+# --- Интерактивный опрос параметров ------------------------------------------
 if [[ -z "$DISK" ]]; then
   echo
   lsblk -dno NAME,SIZE,MODEL | sed 's/^/  /'
@@ -32,11 +42,38 @@ if [[ -z "$DISK" ]]; then
 fi
 [[ -b "$DISK" ]] || die "Блочное устройство $DISK не найдено."
 
+if [[ -z "$HOSTNAME_TARGET" ]]; then
+  read -rp "Hostname [$OLD_HOST]: " HOSTNAME_TARGET
+  HOSTNAME_TARGET="${HOSTNAME_TARGET:-$OLD_HOST}"
+fi
+[[ "$HOSTNAME_TARGET" =~ ^[a-zA-Z][a-zA-Z0-9-]*$ ]] || \
+  die "Невалидный hostname: $HOSTNAME_TARGET"
+
+if [[ -z "$USERNAME_TARGET" ]]; then
+  read -rp "Имя пользователя [$OLD_USER]: " USERNAME_TARGET
+  USERNAME_TARGET="${USERNAME_TARGET:-$OLD_USER}"
+fi
+[[ "$USERNAME_TARGET" =~ ^[a-z_][a-z0-9_-]*$ ]] || \
+  die "Невалидное имя пользователя: $USERNAME_TARGET"
+
+if [[ -z "$GPU" ]]; then
+  echo
+  echo "  GPU-профили: nvidia, intel, amd, none"
+  read -rp "Какой GPU? [nvidia]: " GPU
+  GPU="${GPU:-nvidia}"
+fi
+case "$GPU" in
+  nvidia|intel|amd|none) ;;
+  *) die "Неизвестный GPU: $GPU (выбирай: nvidia | intel | amd | none)" ;;
+esac
+[[ -f "$DOTFILES_DIR/gpu/$GPU.nix" ]] || die "gpu/$GPU.nix не найден."
+
 cat <<EOF
 
   Целевой диск:  $DISK
   Hostname:      $HOSTNAME_TARGET
-  Пользователь:  $USERNAME
+  Пользователь:  $USERNAME_TARGET
+  GPU-профиль:   $GPU
   Конфиг:        $DOTFILES_DIR
 
   Все данные на $DISK будут УНИЧТОЖЕНЫ.
@@ -44,72 +81,99 @@ EOF
 read -rp "Продолжить? введи 'yes': " confirm
 [[ "$confirm" == "yes" ]] || die "Отменено."
 
-# --- 2. Подмена устройства в disko.nix (если нужно) --------------------------
-DISKO_FILE="$DOTFILES_DIR/disko.nix"
+# --- 1. Готовим рабочую копию dotfiles в /tmp --------------------------------
+# Все правки делаем в копии, чтобы не модифицировать репо.
+WORK="$(mktemp -d -t mbdots-XXXXXX)"
+trap 'rm -rf "$WORK"' EXIT
+cp -a "$DOTFILES_DIR/." "$WORK/"
+log "Рабочая копия: $WORK"
+
+# --- 2. Подменяем устройство в disko.nix --------------------------------------
 if [[ "$DISK" != "/dev/nvme1n1" ]]; then
-  log "Подменяю устройство в disko.nix на $DISK"
-  TMP_DISKO="$(mktemp --suffix=.nix)"
-  sed "s|/dev/nvme1n1|$DISK|g" "$DISKO_FILE" > "$TMP_DISKO"
-  DISKO_FILE="$TMP_DISKO"
+  log "disko.nix: устройство $DISK"
+  sed -i "s|/dev/nvme1n1|$DISK|g" "$WORK/disko.nix"
 fi
 
-# --- 3. Disko: разметка, шифрование, монтирование -----------------------------
+# --- 3. Подмена hostname и username ------------------------------------------
+if [[ "$HOSTNAME_TARGET" != "$OLD_HOST" ]]; then
+  log "Подменяю hostname: $OLD_HOST → $HOSTNAME_TARGET"
+  # configuration.nix: networking.hostName + zsh-alias 'update'
+  sed -i \
+    -e "s/networking.hostName = \"$OLD_HOST\"/networking.hostName = \"$HOSTNAME_TARGET\"/" \
+    -e "s|/etc/nixos#$OLD_HOST|/etc/nixos#$HOSTNAME_TARGET|g" \
+    "$WORK/configuration.nix"
+  # flake.nix: nixosConfigurations.<host>
+  sed -i "s/nixosConfigurations\.$OLD_HOST/nixosConfigurations.$HOSTNAME_TARGET/" \
+    "$WORK/flake.nix"
+fi
+
+if [[ "$USERNAME_TARGET" != "$OLD_USER" ]]; then
+  log "Подменяю имя пользователя: $OLD_USER → $USERNAME_TARGET"
+  # configuration.nix: users.users.<user>
+  sed -i "s/users\.users\.$OLD_USER/users.users.$USERNAME_TARGET/g" \
+    "$WORK/configuration.nix"
+  # flake.nix: home-manager users.<user>
+  sed -i "s/users\.$OLD_USER = import/users.$USERNAME_TARGET = import/" \
+    "$WORK/flake.nix"
+  # home.nix: home.username + home.homeDirectory
+  sed -i \
+    -e "s/home\.username = \"$OLD_USER\"/home.username = \"$USERNAME_TARGET\"/" \
+    -e "s|home\.homeDirectory = \"/home/$OLD_USER\"|home.homeDirectory = \"/home/$USERNAME_TARGET\"|" \
+    "$WORK/home.nix"
+fi
+
+# --- 4. Активируем выбранный GPU-профиль -------------------------------------
+log "GPU-профиль: gpu/$GPU.nix → gpu/current.nix"
+cp "$WORK/gpu/$GPU.nix" "$WORK/gpu/current.nix"
+
+# --- 5. Disko: разметка, шифрование, монтирование ----------------------------
 log "Запускаю disko (запросит пароль LUKS)..."
 nix --experimental-features 'nix-command flakes' \
   run github:nix-community/disko/latest -- \
-  --mode destroy,format,mount "$DISKO_FILE"
+  --mode destroy,format,mount "$WORK/disko.nix"
 
-# --- 4. Копируем nix-конфиг в /mnt/etc/nixos ---------------------------------
+# --- 6. Кладём конфиг в /mnt/etc/nixos ---------------------------------------
 log "Копирую nix-конфиг в /mnt/etc/nixos"
 install -d -m 0755 /mnt/etc/nixos
 for f in configuration.nix flake.nix flake.lock home.nix discord.nix \
          noctalia.nix stylix.nix disko.nix WP.png; do
-  if [[ -e "$DOTFILES_DIR/$f" ]]; then
-    cp -v "$DOTFILES_DIR/$f" /mnt/etc/nixos/
+  if [[ -e "$WORK/$f" ]]; then
+    cp -v "$WORK/$f" /mnt/etc/nixos/
   fi
 done
+install -d -m 0755 /mnt/etc/nixos/gpu
+cp -v "$WORK/gpu/current.nix" /mnt/etc/nixos/gpu/
 
-# --- 5. Генерируем hardware-configuration.nix под целевое железо --------------
-# Без --no-filesystems: disko не подключён к системному модулю, fileSystems
-# должны быть описаны через стандартный hardware-configuration.nix. UUID
-# берутся со свежеразмеченных и смонтированных дисков.
+# --- 7. Свежий hardware-configuration.nix под целевое железо -----------------
+# Генерируем после копирования, чтобы случайно не перезаписать его.
 log "Генерирую hardware-configuration.nix"
 nixos-generate-config --root /mnt --force
+# nixos-generate-config пишет ./hardware-configuration.nix и
+# ./configuration.nix в /mnt/etc/nixos. Наш configuration.nix только что был
+# скопирован, поэтому затрём шаблон от generate-config повторно:
+cp -v "$WORK/configuration.nix" /mnt/etc/nixos/configuration.nix
 
-# Меняем hostname в configuration.nix и flake.nix, если задано другое имя.
-if [[ "$HOSTNAME_TARGET" != "MB-PC" ]]; then
-  log "Меняю hostname на $HOSTNAME_TARGET (configuration.nix + flake.nix)"
-  sed -i "s/networking.hostName = \"MB-PC\"/networking.hostName = \"$HOSTNAME_TARGET\"/" \
-    /mnt/etc/nixos/configuration.nix
-  sed -i "s/nixosConfigurations.MB-PC/nixosConfigurations.$HOSTNAME_TARGET/" \
-    /mnt/etc/nixos/flake.nix
-  # Алиас 'update' в zsh тоже ссылается на #MB-PC.
-  sed -i "s|nixos-rebuild switch --flake /etc/nixos#MB-PC|nixos-rebuild switch --flake /etc/nixos#$HOSTNAME_TARGET|" \
-    /mnt/etc/nixos/configuration.nix
-fi
-
-# --- 6. Установка -------------------------------------------------------------
+# --- 8. Установка ------------------------------------------------------------
 log "Запускаю nixos-install (это надолго)"
 nixos-install --root /mnt --flake "/mnt/etc/nixos#$HOSTNAME_TARGET" --no-root-passwd
 
-# --- 7. Пользовательские конфиги ---------------------------------------------
-USER_HOME="/mnt/home/$USERNAME"
-if [[ -d "$DOTFILES_DIR/config" && -d "$USER_HOME" ]]; then
-  log "Копирую ~/.config/* для $USERNAME"
+# --- 9. Пользовательские конфиги ---------------------------------------------
+USER_HOME="/mnt/home/$USERNAME_TARGET"
+if [[ -d "$WORK/config" ]]; then
+  log "Копирую ~/.config/* для $USERNAME_TARGET"
   install -d -m 0755 "$USER_HOME/.config"
-  cp -rv "$DOTFILES_DIR/config/." "$USER_HOME/.config/"
-  # UID/GID берём из /mnt/etc/passwd, чтобы не зависеть от хост-системы
-  uid="$(awk -F: -v u="$USERNAME" '$1==u{print $3}' /mnt/etc/passwd)"
-  gid="$(awk -F: -v u="$USERNAME" '$1==u{print $4}' /mnt/etc/passwd)"
+  cp -rv "$WORK/config/." "$USER_HOME/.config/"
+  uid="$(awk -F: -v u="$USERNAME_TARGET" '$1==u{print $3}' /mnt/etc/passwd)"
+  gid="$(awk -F: -v u="$USERNAME_TARGET" '$1==u{print $4}' /mnt/etc/passwd)"
   if [[ -n "$uid" && -n "$gid" ]]; then
-    chown -R "$uid:$gid" "$USER_HOME/.config"
+    chown -R "$uid:$gid" "$USER_HOME"
   fi
 fi
 
-# --- 8. Пароль пользователя ---------------------------------------------------
-log "Установи пароль для $USERNAME (внутри chroot):"
-nixos-enter --root /mnt -c "passwd $USERNAME" || \
-  warn "Пропускаю установку пароля — сделай 'passwd $USERNAME' после ребута."
+# --- 10. Пароль пользователя -------------------------------------------------
+log "Установи пароль для $USERNAME_TARGET (внутри chroot):"
+nixos-enter --root /mnt -c "passwd $USERNAME_TARGET" || \
+  warn "Пропускаю установку пароля — сделай 'passwd $USERNAME_TARGET' после ребута."
 
 cat <<EOF
 

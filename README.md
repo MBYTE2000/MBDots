@@ -16,6 +16,14 @@
 ├── stylix.nix                    — тема системы
 ├── disko.nix                     — декларативная разметка диска
 │                                   (nvme: ESP + LUKS → btrfs subvolumes)
+├── gpu/                          — GPU-профили (включаются через
+│   │                               imports в configuration.nix)
+│   ├── nvidia.nix
+│   ├── intel.nix                 — встроенная графика Intel (iHD/i965)
+│   ├── amd.nix
+│   ├── none.nix
+│   └── current.nix               — активный профиль (install.sh
+│                                   копирует сюда нужный)
 ├── WP.png                        — обои (используются stylix)
 ├── config/                       — пользовательские конфиги в ~/.config/
 │   ├── niri/                     — оконник
@@ -40,26 +48,42 @@
    cd /tmp/dotfiles
    ```
 
-4. Запустить установку:
+4. Запустить установку (интерактивно — спросит диск, hostname, имя
+   пользователя, GPU-профиль):
 
    ```sh
    sudo ./install.sh
    ```
 
-   Или с готовыми параметрами:
+   Или сразу с параметрами:
 
    ```sh
-   DISK=/dev/nvme0n1 HOSTNAME=MB-PC sudo -E ./install.sh
+   DISK=/dev/nvme0n1 \
+   HOSTNAME=mylaptop \
+   USERNAME=alice \
+   GPU=intel \
+     sudo -E ./install.sh
    ```
 
+   Поддерживаемые `GPU`: `nvidia` | `intel` | `amd` | `none`.
+
 5. Скрипт по шагам:
-   - запросит подтверждение и пароль LUKS;
-   - запустит **disko** (форматирование + шифрование + монтирование);
-   - сгенерирует `hardware-configuration.nix` под целевое железо;
-   - скопирует все `.nix`-файлы в `/mnt/etc/nixos/`;
-   - запустит `nixos-install --flake /mnt/etc/nixos#<hostname>`;
-   - скопирует `config/*` в `/mnt/home/mbyte/.config/`;
-   - попросит задать пароль пользователю.
+   - валидирует параметры и просит подтверждения;
+   - готовит правленную копию dotfiles в `/tmp` (репо не трогается);
+   - подменяет в копии: устройство в `disko.nix`, hostname в
+     `configuration.nix`/`flake.nix`/zsh-алиасе, имя пользователя
+     в `configuration.nix`/`flake.nix`/`home.nix`, активный
+     GPU-профиль (`gpu/<тип>.nix → gpu/current.nix`);
+   - запускает **disko** (форматирование + шифрование + монтирование),
+     запросит пароль LUKS;
+   - копирует все `.nix`-файлы и `gpu/current.nix` в
+     `/mnt/etc/nixos/`;
+   - генерирует свежий `hardware-configuration.nix` под целевое
+     железо;
+   - запускает `nixos-install --flake /mnt/etc/nixos#<hostname>`;
+   - копирует `config/*` в `/mnt/home/<username>/.config/` и
+     выставляет владельца;
+   - просит задать пароль пользователю через `nixos-enter`.
 
 6. `umount -R /mnt && reboot`.
 
@@ -105,8 +129,13 @@ inputs.disko.nixosModules.disko
 - `hardware-configuration.nix` в репо — снимок текущей машины. На новом
   ПК `install.sh` его перезапишет (`nixos-generate-config --force`).
   Менять руками не нужно.
-- Привязка к hostname `MB-PC` — в `flake.nix`. `install.sh` подменит
-  `networking.hostName`, но имя в `nixosConfigurations.<имя>` останется
-  тем же — поэтому `--flake ...#MB-PC` будет работать всегда.
+- Имя пользователя `mbyte` и hostname `MB-PC` — дефолты репозитория.
+  `install.sh` подменяет их во всех нужных местах: `users.users.<u>`,
+  `home.username`/`home.homeDirectory`, `users.<u> = import ./home.nix`,
+  `networking.hostName`, `nixosConfigurations.<host>` и zsh-alias
+  `update`.
 - `WP.png` хранится в репо для воспроизводимости темы (используется
   через `stylix.nix`).
+- `gpu/current.nix` по умолчанию = `gpu/nvidia.nix` (текущая машина
+  MB-PC). На новой установке `install.sh` перезапишет его выбранным
+  профилем.

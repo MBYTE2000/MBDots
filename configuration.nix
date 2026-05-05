@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./stylix.nix
+      ./gpu/current.nix   # GPU-профиль (install.sh кладёт его из gpu/{nvidia,intel,amd,none}.nix)
     ];
 
   nixpkgs.config.allowUnfree = true;
@@ -37,7 +38,7 @@
     #theme = "bgrt";
   };
   boot.initrd.systemd.enable = true;
-  boot.kernelParams = [ "quiet" "splash" "nvidia_drm.modeset=1" ];
+  boot.kernelParams = [ "quiet" "splash" ];
   networking.hostName = "MB-PC"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -70,7 +71,6 @@
   #   keyMap = "us";
   #   useXkbConfig = true; # use xkb.options in tty.
   # };
-  boot.initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_drm" "nvidia_uvm" ];
   boot.initrd.systemd.services.plymouth-start = {
     after = [ "systemd-modules-load.service" ];
     requires = [ "systemd-modules-load.service" ];
@@ -87,15 +87,6 @@
 
   services.gvfs.enable = true;
   services.udisks2.enable = true;
-  services.xserver.videoDrivers = ["nvidia"];
-  #services.videoDrivers = ["nvidia"];
-
-  hardware.nvidia = {
-    modesetting.enable = true;
-    open = false; # Use the open-source kernel module
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-  };
 
   xdg.portal = {
     enable = true;
@@ -236,7 +227,6 @@
     unzip
     unrar
     nodejs
-    nvidia-vaapi-driver
     sddm-astronaut
     rpi-imager
   ];
