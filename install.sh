@@ -41,6 +41,9 @@ if [[ -z "$DISK" ]]; then
   read -rp "На какой диск ставим? (например /dev/nvme0n1): " DISK
 fi
 [[ -b "$DISK" ]] || die "Блочное устройство $DISK не найдено."
+disk_type="$(lsblk -dno TYPE "$DISK" 2>/dev/null || true)"
+[[ "$disk_type" == "disk" ]] || \
+  die "$DISK — это '$disk_type', а не целый диск. Укажи /dev/nvmeN или /dev/sdX без номера раздела."
 
 if [[ -z "$HOSTNAME_TARGET" ]]; then
   read -rp "Hostname [$OLD_HOST]: " HOSTNAME_TARGET
@@ -84,15 +87,33 @@ read -rp "Продолжить? введи 'yes': " confirm
 # --- 1. Готовим рабочую копию dotfiles в /tmp --------------------------------
 # Все правки делаем в копии, чтобы не модифицировать репо.
 WORK="$(mktemp -d -t mbdots-XXXXXX)"
-trap 'rm -rf "$WORK"' EXIT
+LUKS_PWFILE="/tmp/disko-luks-password"  # путь захардкожен в disko.nix
+cleanup() { rm -rf "$WORK" "$LUKS_PWFILE" 2>/dev/null || true; }
+trap cleanup EXIT
 cp -a "$DOTFILES_DIR/." "$WORK/"
 log "Рабочая копия: $WORK"
 
-# --- 2. Подменяем устройство в disko.nix --------------------------------------
-if [[ "$DISK" != "/dev/nvme1n1" ]]; then
-  log "disko.nix: устройство $DISK"
-  sed -i "s|/dev/nvme1n1|$DISK|g" "$WORK/disko.nix"
-fi
+# --- 1a. Запрос пароля LUKS (с верификацией) ---------------------------------
+# Пароль кладём в /tmp/disko-luks-password, disko.nix ссылается на этот путь.
+# Файл создаётся с правами 600 и стирается trap'ом при выходе.
+log "Введи парольную фразу для LUKS-шифрования диска"
+while true; do
+  IFS= read -rsp "  Пароль: " pw1; echo
+  IFS= read -rsp "  Повтор: " pw2; echo
+  if [[ -z "$pw1" ]]; then
+    warn "Пароль не может быть пустым."
+    continue
+  fi
+  if [[ "$pw1" != "$pw2" ]]; then
+    warn "Пароли не совпадают."
+    continue
+  fi
+  break
+done
+( umask 077; printf '%s' "$pw1" > "$LUKS_PWFILE" )
+unset pw1 pw2
+
+# --- 2. Устройство передаётся в disko через --argstr disk (см. шаг 5) --------
 
 # --- 3. Подмена hostname и username ------------------------------------------
 if [[ "$HOSTNAME_TARGET" != "$OLD_HOST" ]]; then
@@ -126,11 +147,25 @@ fi
 log "GPU-профиль: gpu/$GPU.nix → gpu/current.nix"
 cp "$WORK/gpu/$GPU.nix" "$WORK/gpu/current.nix"
 
+# --- 4a. Временно вставляем passwordFile в disko.nix -------------------------
+# disko-форматирование возьмёт пароль из $LUKS_PWFILE без интерактивного ввода.
+# Эта правка живёт только в рабочей копии и до запуска disko.
+sed -i \
+  "s|name = \"crypted\";|name = \"crypted\";\n              passwordFile = \"$LUKS_PWFILE\";|" \
+  "$WORK/disko.nix"
+
 # --- 5. Disko: разметка, шифрование, монтирование ----------------------------
-log "Запускаю disko (запросит пароль LUKS)..."
+log "Запускаю disko на $DISK (пароль из $LUKS_PWFILE)..."
 nix --experimental-features 'nix-command flakes' \
   run github:nix-community/disko/latest -- \
-  --mode destroy,format,mount "$WORK/disko.nix"
+  --mode destroy,format,mount \
+  --argstr disk "$DISK" \
+  "$WORK/disko.nix"
+
+# Стираем пароль и убираем passwordFile из рабочей копии (чтобы в
+# /mnt/etc/nixos/disko.nix не осталось ссылок на /tmp-файл).
+shred -u "$LUKS_PWFILE" 2>/dev/null || rm -f "$LUKS_PWFILE"
+sed -i "\\|passwordFile = \"$LUKS_PWFILE\";|d" "$WORK/disko.nix"
 
 # --- 6. Кладём конфиг в /mnt/etc/nixos ---------------------------------------
 log "Копирую nix-конфиг в /mnt/etc/nixos"

@@ -1,7 +1,7 @@
-{ lib, ... }:
-let
-  disk = lib.mkDefault "/dev/nvme1n1";
-in
+# Диск передаётся при запуске:
+#   disko --argstr disk /dev/nvme0n1 --mode destroy,format,mount disko.nix
+# install.sh делает это автоматически (спрашивает в начале установки).
+{ disk ? throw "Не указан диск. Запусти: disko --argstr disk /dev/sdX ...", ... }:
 {
   disko.devices = {
     disk.main = {

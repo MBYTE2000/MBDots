@@ -68,18 +68,27 @@
    Поддерживаемые `GPU`: `nvidia` | `intel` | `amd` | `none`.
 
 5. Скрипт по шагам:
-   - валидирует параметры и просит подтверждения;
+   - валидирует параметры (в т.ч. что `$DISK` — целый диск, а не
+     раздел) и просит подтверждения;
+   - **запрашивает парольную фразу LUKS дважды** (verify) и кладёт
+     её в `/tmp/disko-luks-password` с правами 600;
    - готовит правленную копию dotfiles в `/tmp` (репо не трогается);
-   - подменяет в копии: устройство в `disko.nix`, hostname в
-     `configuration.nix`/`flake.nix`/zsh-алиасе, имя пользователя
-     в `configuration.nix`/`flake.nix`/`home.nix`, активный
-     GPU-профиль (`gpu/<тип>.nix → gpu/current.nix`);
-   - запускает **disko** (форматирование + шифрование + монтирование),
-     запросит пароль LUKS;
+   - подменяет в копии: hostname в `configuration.nix`/`flake.nix`/
+     zsh-алиасе, имя пользователя в `configuration.nix`/`flake.nix`/
+     `home.nix`, активный GPU-профиль (`gpu/<тип>.nix →
+     gpu/current.nix`), временно вставляет `passwordFile` в
+     `disko.nix`;
+   - запускает **disko**, передавая выбранный диск через
+     `--argstr disk` (форматирование + шифрование + монтирование);
+     пароль читается из подготовленного файла без интерактивного
+     ввода в cryptsetup;
+   - стирает файл с паролем (`shred`) и убирает `passwordFile` из
+     рабочей копии — в `/mnt/etc/nixos/disko.nix` его уже не будет;
    - копирует все `.nix`-файлы и `gpu/current.nix` в
      `/mnt/etc/nixos/`;
    - генерирует свежий `hardware-configuration.nix` под целевое
-     железо;
+     железо (UUID разделов будут от свежеразмеченных, не от диска
+     MB-PC);
    - запускает `nixos-install --flake /mnt/etc/nixos#<hostname>`;
    - копирует `config/*` в `/mnt/home/<username>/.config/` и
      выставляет владельца;
@@ -99,8 +108,9 @@
 
 `disko.nix` описывает:
 
-- `/dev/nvme1n1` (по умолчанию) — изменяется через `DISK=...` в
-  `install.sh`;
+- диск передаётся как параметр (`{ disk, ... }:`), `install.sh`
+  пробрасывает выбранное устройство через `--argstr disk "$DISK"`;
+  никаких хардкодов `/dev/nvme1n1` в файле нет;
 - GPT, ESP 1 ГБ (`/boot`, vfat, fmask=0077);
 - остальное — LUKS2 (`crypted`) → btrfs с subvolumes:
   - `root` → `/` (zstd, noatime)
