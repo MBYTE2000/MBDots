@@ -1,0 +1,30 @@
+{ pkgs, ... }:
+{
+  home.packages = with pkgs; [
+    btop
+    fuzzel
+    kdePackages.dolphin
+    materialgram
+    vlc
+    fastfetch
+    wallust
+    onlyoffice-desktopeditors
+    gimp
+    kdePackages.kdenlive
+    yt-dlp
+    zoxide
+    steam
+    kdePackages.okular
+    qbittorrent
+    texlive.combined.scheme-full
+    claude-code
+    protonup-qt
+    esptool
+    rns
+    heroic
+    chromium
+    python3Packages.huggingface-hub
+    opencode
+    nvitop
+  ];
+}

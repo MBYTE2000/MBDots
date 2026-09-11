@@ -1,0 +1,4 @@
+{ ... }:
+{
+  programs.mangohud.enable = true;
+}
