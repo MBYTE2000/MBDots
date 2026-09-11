@@ -1,0 +1,17 @@
+[Desktop Entry]
+FullScreen=false
+
+[General]
+LockSidebar=true
+ShowSidebar=true
+
+[MainWindow]
+MenuBar=Disabled
+
+[Recent Files]
+File1[$e]=$HOME/Downloads/12_100229_1_125832.pdf
+File2[$e]=$HOME/Diploma/standart.pdf
+File3[$e]=$HOME/Downloads/materialgram/Дипломное_проектирование_темы_2026.pdf
+Name1[$e]=12_100229_1_125832.pdf
+Name2[$e]=standart.pdf
+Name3[$e]=Дипломное_проектирование_темы_2026.pdf

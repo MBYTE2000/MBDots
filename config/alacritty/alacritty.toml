@@ -1,0 +1,35 @@
+[env]
+TERM = "xterm-256color"
+
+#[shell]
+#program = "/usr/bin/zsh"
+#args = ["-l"]
+
+[window]
+startup_mode = "Windowed"
+title = "Alacritty"
+dynamic_title = true
+padding.x = 12
+padding.y = 12
+opacity = 0.8
+
+[font.normal]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Italic"
+
+[font.bold_italic]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Bold Italic"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"
