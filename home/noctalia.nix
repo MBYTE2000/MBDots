@@ -4,6 +4,13 @@
     inputs.noctalia.homeModules.default
   ];
 
+  # `homeModules.default` не кладёт бинарник noctalia-shell в PATH
+  # (только регистрирует quickshell-конфиг). Добавляем сам package,
+  # чтобы биндинги вида `spawn "noctalia-shell" "ipc" ...` работали.
+  # (inputs.noctalia.packages.default = pname "noctalia" 5.0.0 — dmenu-подобный,
+  # НЕ то что нужно; используем pkgs.noctalia-shell из nixpkgs.)
+  home.packages = [ pkgs.noctalia-shell ];
+
   programs.noctalia = {
     enable = true;
     settings = {

@@ -2,7 +2,7 @@
 {
   home.packages = with pkgs; [
     btop
-    fuzzel
+    #fuzzel                      # больше не используется — лаунчер через noctalia
     kdePackages.dolphin
     materialgram
     vlc
