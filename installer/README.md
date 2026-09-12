@@ -55,12 +55,30 @@ installer/
     └── util.mjs           — sh/shStream/lsblk/preflight
 ```
 
+## Demo (просмотр UI без установки)
+
+```bash
+cd installer
+nix-shell -p nodejs_22 --run "npm install --omit=dev --loglevel=error && npm run demo"
+```
+
+Или, если node уже стоит:
+
+```bash
+cd installer && npm install --omit=dev && node demo.mjs
+```
+
+Демо неинтерактивно проигрывает все 8 экранов подряд с задержками —
+баннер, preflight, промпты, summary/warning/success боксы, эмуляцию
+disko/nixos-install streams. Реальной установки не происходит.
+
 ## Development
 
 Установщик — чистый Node 20+ ESM, без билд-шага (JSX / TS / bundler не нужны).
 
 - `bash -n install.sh` — проверка синтаксиса
 - `node --check installer/**/*.mjs` — проверка JS
+- `npm run demo` — визуальный smoke-test
 
 Полный запуск возможен только с NixOS Live ISO — на живой системе шаг disko
 попытается стереть диск.
