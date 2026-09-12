@@ -1,0 +1,15 @@
+layer-rule {
+    match namespace="^noctalia-wallpaper-*"
+    opacity 0.0
+}
+//layer-rule {
+//    match namespace="^noctalia-wallpaper-DP-3$"
+//    opacity 0.0
+//}
+
+layer-rule {
+    match namespace="^mpvpaper$"
+    place-within-backdrop true
+}
+
+

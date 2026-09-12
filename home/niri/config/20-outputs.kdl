@@ -1,0 +1,17 @@
+output "HDMI-A-1" {
+    mode "1920x1080@60.000"
+    scale 1
+    transform "normal"
+    position x=1920 y=0
+    //position x=0 y=0
+}
+output "DP-1" {
+    mode "1920x1080@60.000"
+    scale 1
+    //tarnsform "normal" 
+    position x=0 y=0
+}
+
+// Settings that influence how windows are positioned and sized.
+// Find more information on the wiki:
+// https://yalter.github.io/niri/Configuration:-Layout
