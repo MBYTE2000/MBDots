@@ -1,3 +1,6 @@
+# Секция 40-hotkey-overlay — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 hotkey-overlay {
     skip-at-startup
 }
@@ -21,3 +24,4 @@ screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 // Animation settings.
 // The wiki explains how to configure individual animations:
 // https://yalter.github.io/niri/Configuration:-Animations
+''

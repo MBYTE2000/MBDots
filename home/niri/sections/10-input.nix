@@ -1,3 +1,6 @@
+# Секция 10-input — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 input {
     keyboard {
         xkb {
@@ -67,3 +70,4 @@ input {
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Outputs
 // Remember to uncomment the node by removing "/-"!
+''

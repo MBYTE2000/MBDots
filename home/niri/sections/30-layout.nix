@@ -1,3 +1,6 @@
+# Секция 30-layout — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 layout {
     // Set gaps around windows in logical pixels.
     background-color "transparent"
@@ -170,4 +173,4 @@ spawn-at-startup "noctalia-shell"
 //spawn-sh-at-startup "swww img ~/Wallpapers/WP.webp"
 spawn-sh-at-startup "mpvpaper -o 'no-audio --loop-playlist' ALL ~/Wallpapers/WP.mp4"
 //spawn-sh-at-startup "wallust run ~/Wallpapers/WP.png"
-
+''

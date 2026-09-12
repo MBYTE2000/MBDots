@@ -1,3 +1,6 @@
+# Секция 80-binds — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 binds {
     // Keys consist of modifiers separated by + signs, followed by an XKB key name
     // in the end. To find an XKB name for a particular key, you may use a program
@@ -265,4 +268,4 @@ binds {
     // The quit action will show a confirmation dialog to avoid accidental exits.
     Mod+Shift+E { quit; }
     Ctrl+Alt+Delete { quit; }
-
+''

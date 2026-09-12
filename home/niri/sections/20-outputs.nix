@@ -1,3 +1,6 @@
+# Секция 20-outputs — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 output "HDMI-A-1" {
     mode "1920x1080@60.000"
     scale 1
@@ -15,3 +18,4 @@ output "DP-1" {
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Layout
+''

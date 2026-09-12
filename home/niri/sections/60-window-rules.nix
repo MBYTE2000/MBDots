@@ -1,3 +1,6 @@
+# Секция 60-window-rules — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 window-rule {
     // This regular expression is intentionally made as specific as possible,
     // since this is the default config, and we want no false positives.
@@ -40,3 +43,4 @@ window-rule {
     match app-id="equibop"
     draw-border-with-background false
 }
+''

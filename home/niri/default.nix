@@ -1,34 +1,35 @@
 { config, pkgs, lib, ... }:
-# Niri user-config, декларативно из этого модуля.
+# Niri user-config, полностью декларативный внутри Nix.
 #
-# config.kdl собирается склейкой отдельных секций из `./config/*.kdl` —
-# так проще ревьюить (input отдельно от binds отдельно от layout).
-# Файл включает `./noctalia.kdl` — он тоже деплоится home-manager’ом.
+# Каждая секция KDL лежит в отдельном .nix-файле в ./sections/ и возвращает
+# KDL-строку. Здесь мы просто их конкатенируем и деплоим один config.kdl.
+#
+# Плюсы vs raw .kdl:
+#   • всё редактируется как Nix (можно вставлять ${config.stylix.*}, if-then-else и т.д.);
+#   • grep/find/eval работают с одним расширением;
+#   • дерево видно в flake sources.
 let
-  # Порядок склейки задан явно, а не через readDir, — чтобы сохранить логику
-  # секций (input → outputs → layout → window-rules → binds → include).
+  # Порядок склейки задан явно — важно для binds vs layout vs input.
   parts = [
-    "00-header"          # комментарии + prefer-no-csd
-    "10-input"           # keyboard/touchpad/mouse/tablet
-    "20-outputs"         # HDMI-A-1, DP-1
-    "30-layout"          # gaps, borders, focus-ring, structure
-    "40-hotkey-overlay"  # help panel
-    "50-animations"      # springs
-    "60-window-rules"    # per-app rules
-    "70-overview"        # workspace overview background/etc
-    "75-layer-rules"     # layer-shell rules (waybar, notifications)
-    "80-binds"           # keybindings — самая большая секция
-    "99-tail"            # include noctalia.kdl + trailing
+    ./sections/00-header.nix          # comments + prefer-no-csd
+    ./sections/10-input.nix           # keyboard / touchpad / mouse / tablet
+    ./sections/20-outputs.nix         # HDMI-A-1, DP-1
+    ./sections/30-layout.nix          # gaps / borders / focus-ring / structure
+    ./sections/40-hotkey-overlay.nix  # help panel
+    ./sections/50-animations.nix      # springs
+    ./sections/60-window-rules.nix    # per-app правила
+    ./sections/70-overview.nix        # overview фон/etc
+    ./sections/75-layer-rules.nix     # layer-shell правила
+    ./sections/80-binds.nix           # keybindings — самая большая секция
+    ./sections/99-tail.nix            # include noctalia.kdl + trailing
   ];
-
-  readPart = name: builtins.readFile (./config + "/${name}.kdl");
-  concatenated = lib.concatStringsSep "\n" (map readPart parts);
 in
 {
-  # Основной конфиг: собираем из секций.
-  xdg.configFile."niri/config.kdl".text = concatenated;
+  # Главный конфиг: собираем из Nix-строк.
+  xdg.configFile."niri/config.kdl".text =
+    lib.concatMapStringsSep "\n" (p: import p) parts;
 
-  # Вспомогательный include — цветовая тема от noctalia, которую main config
-  # подтягивает через `include "./noctalia.kdl"`.
+  # Include-цель. noctalia.kdl остаётся бинарным (не Nix), т.к. это чужой
+  # сгенерированный файл — цветовая тема noctalia-shell.
   xdg.configFile."niri/noctalia.kdl".source = ./noctalia.kdl;
 }

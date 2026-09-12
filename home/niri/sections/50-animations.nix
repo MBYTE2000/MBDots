@@ -1,3 +1,6 @@
+# Секция 50-animations — сгенерирована из config.kdl, теперь редактируется как Nix.
+# Возвращает KDL-строку, которая склеивается в home/niri/default.nix.
+''
 animations {
     // Uncomment to turn off all animations.
     // off
@@ -12,3 +15,4 @@ animations {
 
 // Work around WezTerm's initial configure bug
 // by setting an empty default-column-width.
+''
