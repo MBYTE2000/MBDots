@@ -15,6 +15,16 @@
   };
 
   home.packages = with pkgs; [
+    # Стиль-движок Kvantum. Именно он читает Base16Kvantum, который пишет
+    # stylix. Без этих пакетов Qt-приложения ставят QT_STYLE_OVERRIDE=kvantum,
+    # не находят libkvantum.so и падают на fusion → белые кнопки в Dolphin.
+    kdePackages.qtstyleplugin-kvantum         # Qt6 (Dolphin/Okular/Gwenview 25.x)
+    libsForQt5.qtstyleplugin-kvantum          # Qt5 (kdenlive, старые KDE-приложения)
+
+    # Qt config UIs (stylix пишет в них; сам qt6ct-плагин нужен как platformTheme)
+    qt6Packages.qt6ct
+    libsForQt5.qt5ct
+
     # Frameworks / интеграция
     kdePackages.plasma-integration     # Wayland/portal мосты для KDE-приложений
     kdePackages.breeze-icons           # fallback-иконки (некоторые dialogs требуют)
