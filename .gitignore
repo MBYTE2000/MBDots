@@ -2,3 +2,8 @@ result
 result-*
 *.qcow2
 .direnv/
+
+# installer TUI: node_modules ставятся один раз при запуске install.sh,
+# не должны попадать в git. package-lock.json — коммитим для воспроизводимости.
+installer/node_modules/
+

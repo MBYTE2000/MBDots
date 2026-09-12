@@ -81,11 +81,30 @@ myConfig.services.ssh.enable     = true;
 
 ## Установка на новую машину
 
+С NixOS Live ISO (25.11+, минимальный/графический):
+
 ```bash
-git clone git@github.com:MBYTE2000/MBDots.git ~/nixos-config
-cd ~/nixos-config
-./install.sh              # ставит disko + rebuilds + монтирует конфиг
+git clone https://github.com/MBYTE2000/MBDots.git
+cd MBDots
+./install.sh
 ```
+
+`install.sh` — тонкая обёртка: поднимает `nix-shell -p nodejs_22`, ставит
+npm-зависимости в `installer/node_modules/` (одноразово) и запускает
+TUI-установщик **MBDots Installer**. Дальше — интерактивно:
+
+- выбор диска из `lsblk` (стрелками)
+- hostname / username / GPU-профиль / timezone (все с валидацией)
+- LUKS-пароль (с подтверждением)
+- финальный `YES` для очистки диска
+- `disko` → форматирование → шифрование → монтирование `/mnt`
+- `nixos-install --flake ...#<hostname>`
+- копирование dot-файлов + repo в `~/nixos-config`
+- `/etc/nixos` → symlink на репо в $HOME
+- пароль пользователя через `nixos-enter`
+- reboot по подтверждению
+
+Подробнее — [installer/README.md](installer/README.md).
 
 ## Документация
 

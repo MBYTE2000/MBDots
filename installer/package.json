@@ -1,0 +1,25 @@
+{
+  "name": "mbdots-installer",
+  "version": "0.1.0",
+  "description": "MBDots — интерактивный TUI-установщик NixOS (dendritic + LUKS/btrfs)",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "mbdots-installer": "./index.mjs"
+  },
+  "scripts": {
+    "start": "node ./index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.0",
+    "execa": "^9.5.2",
+    "figlet": "^1.8.1",
+    "gradient-string": "^3.0.0",
+    "ora": "^8.2.0",
+    "prompts": "^2.4.2"
+  }
+}
