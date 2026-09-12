@@ -23,13 +23,49 @@ let
     ./sections/80-binds.nix           # keybindings — самая большая секция
     ./sections/99-tail.nix            # include noctalia.kdl + trailing
   ];
+
+  # Второй layout-блок — цвета фокусной рамки, границ, теней, tab-indicator’а
+  # и insert-hint’а генерируются из активной stylix-палитры. Раньше это был
+  # статичный `noctalia.kdl` с хард-кодом; теперь любой смены темы (stylix.image
+  # или base16Scheme) хватает, чтобы niri пере-раскрасился на следующем `update`.
+  colors = config.lib.stylix.colors;
+  stylixNiriKdl = ''
+    layout {
+        focus-ring {
+            active-color   "#${colors.base0D}"
+            inactive-color "#${colors.base02}"
+            urgent-color   "#${colors.base08}"
+        }
+
+        border {
+            active-color   "#${colors.base0D}"
+            inactive-color "#${colors.base02}"
+            urgent-color   "#${colors.base08}"
+        }
+
+        shadow {
+            color "#${colors.base00}70"
+        }
+
+        tab-indicator {
+            active-color   "#${colors.base0D}"
+            inactive-color "#${colors.base03}"
+            urgent-color   "#${colors.base08}"
+        }
+
+        insert-hint {
+            color "#${colors.base0D}80"
+        }
+    }
+  '';
 in
 {
   # Главный конфиг: собираем из Nix-строк.
   xdg.configFile."niri/config.kdl".text =
     lib.concatMapStringsSep "\n" (p: import p) parts;
 
-  # Include-цель. noctalia.kdl остаётся бинарным (не Nix), т.к. это чужой
-  # сгенерированный файл — цветовая тема noctalia-shell.
-  xdg.configFile."niri/noctalia.kdl".source = ./noctalia.kdl;
+  # Include-цель для config.kdl. Раньше — статичный файл, экспортированный
+  # noctalia-shell; теперь генерируется из stylix-палитры, чтобы цвета niri
+  # шли из той же base16-схемы, что и остальной desktop.
+  xdg.configFile."niri/noctalia.kdl".text = stylixNiriKdl;
 }
