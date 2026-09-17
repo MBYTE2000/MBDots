@@ -43,4 +43,12 @@ window-rule {
     match app-id="equibop"
     draw-border-with-background false
 }
+
+// Global: focus-ring / border рисуются ВОКРУГ окон, а не solid прямоугольником
+// ПОД ними. Без этого focus-ring просвечивает как solid цвет через любое
+// semi-transparent окно (ghostty c background-opacity=0.85 → выглядит непрозрачным
+// когда в фокусе). См. https://yalter.github.io/niri/Configuration:-Window-Rules
+window-rule {
+    draw-border-with-background false
+}
 ''

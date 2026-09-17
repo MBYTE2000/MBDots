@@ -12,13 +12,14 @@
       window-padding-x = 12;
       window-padding-y = 12;
       background-opacity = lib.mkForce 0.85;  # stylix ставит 1.0
-      # Отключаем размытие фона — на Wayland/Niri оно превращается в solid
-      # (compositor не умеет корректно смешивать). Без него прозрачность
-      # работает и в focused, и в unfocused состоянии.
-      background-blur = false;
-      # linear-corrected — правильное смешивание alpha на Wayland компоsitor'ах
-      # (native выдаёт solid-looking результат из-за некорректного blending'а).
-      alpha-blending = "linear-corrected";
+      # ГЛАВНОЕ: в ghostty 1.3+ дефолт `background-opacity-cells = false`.
+      # Это значит прозрачным становится только пустой фон, а любая ячейка
+      # с текстом/prompt рисуется solid — визуально окно с открытой оболочкой
+      # выглядит "непрозрачным", особенно когда в фокусе (курсор двигается,
+      # ячейки перерисовываются). Включаем — теперь весь буфер прозрачный.
+      background-opacity-cells = true;
+      background-blur = false;                # blur на Wayland → solid
+      alpha-blending = "linear-corrected";    # корректный alpha-mixing
       confirm-close-surface = false;
       window-decoration = false;              # без CSD — niri сам рисует рамку
 
