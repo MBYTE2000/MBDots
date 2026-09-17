@@ -12,7 +12,7 @@
     gimp
     kdePackages.kdenlive
     yt-dlp
-    zoxide
+    # zoxide переехал в home/shell-tools.nix (programs.zoxide.enable=true)
     steam
     kdePackages.okular
     qbittorrent

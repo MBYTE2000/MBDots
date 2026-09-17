@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, lib, ... }:
 # Интеграция Qt/KDE-приложений (Dolphin, Okular, Gwenview, Kdenlive) в non-KDE
 # сессию (Niri/Wayland). Раньше Dolphin отображался "криво": не подхватывал
 # stylix-палитру, миссинг иконки, странные размеры — потому что platformTheme
@@ -37,4 +37,27 @@
     kdePackages.gwenview               # image viewer (default для image/*)
     kdePackages.ark                    # archive manager (application/zip и т.д.)
   ];
+
+  # -- ВАЖНО: обход quirk home-manager / useUserPackages ----------------------
+  # useUserPackages=true не заносит share/{color-schemes,Kvantum,plasma,…}
+  # из home-manager-path в /etc/profiles/per-user/mbyte/share/. Из-за этого
+  # KDE-приложения не находили ColorScheme=Stylix (kdeglobals указывает на
+  # него, но Stylix.colors был доступен только внутри home-path). Итог —
+  # dolphin рисовал белые кнопки, потому что палитра не подтягивалась.
+  #
+  # 1) Отдаём Stylix.colors и Kvantum-темы в user's XDG_DATA_HOME напрямую —
+  #    приложения всегда читают ~/.local/share первым.
+  home.file.".local/share/color-schemes/Stylix.colors".source =
+    config.lib.file.mkOutOfStoreSymlink
+      "${config.home.homeDirectory}/.local/state/home-manager/gcroots/current-home/home-path/share/color-schemes/Stylix.colors";
+
+  # 2) Добавляем home-manager-path/share в XDG_DATA_DIRS. sessionVariables
+  #    пишется в ~/.profile и подхватывается SDDM/PAM на следующем логине
+  #    → niri и всё что оно спавнит увидит правильный DATA_DIRS.
+  home.sessionVariables = {
+    XDG_DATA_DIRS = lib.concatStringsSep ":" [
+      "${config.home.homeDirectory}/.local/state/home-manager/gcroots/current-home/home-path/share"
+      "\${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    ];
+  };
 }

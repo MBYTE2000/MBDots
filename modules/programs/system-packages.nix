@@ -4,7 +4,6 @@
     git
     vim
     wget
-    alacritty
     xwayland-satellite
     mpvpaper
     awww  # раньше был swww, переименовано в nixpkgs

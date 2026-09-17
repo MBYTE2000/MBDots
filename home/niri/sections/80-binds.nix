@@ -21,7 +21,7 @@ binds {
     //Mod+D hotkey-overlay-title="Open Discord" { spawn "equibop"; }
     Mod+E hotkey-overlay-title="Open dolphin" { spawn "dolphin"; }
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+A hotkey-overlay-title="App Launcher: noctalia" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Mod+M hotkey-overlay-title="Open Telegram" { spawn "materialgram"; }
     Mod+S hotkey-overlay-title="Open Steam" { spawn "steam"; }
