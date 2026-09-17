@@ -22,7 +22,7 @@ binds {
     Mod+T hotkey-overlay-title="Terminal: Ghostty"       { spawn "ghostty"; }
     Mod+M hotkey-overlay-title="Telegram: Materialgram"  { spawn "materialgram"; }
     Mod+S hotkey-overlay-title="Steam"                   { spawn "steam"; }
-    Mod+F hotkey-overlay-title="Editor: Neovim (Ghostty)" { spawn "ghostty" "-e" "nvim"; }
+    // Mod+F занят maximize-column ниже; nvim через терминал (`n` в zsh).
 
     // === Noctalia IPC ===
     Mod+A hotkey-overlay-title="App Launcher: noctalia"     { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
