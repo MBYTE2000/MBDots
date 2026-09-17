@@ -15,17 +15,20 @@ binds {
     // Mod-Shift-/, which is usually the same as Mod-?,
     // shows a list of important hotkeys.
     Mod+Shift+Slash { show-hotkey-overlay; }
-    Mod+B hotkey-overlay-title="Open browser" { spawn "librewolf"; }
-    //Mod+D hotkey-overlay-title="Open Discord" { spawn "vesktop" "--enable-features=WaylandWindowDecorations" "--ozone-platform=wayland" "--disable-features=WebRtcAllowInputVolumeAdjustment"; }
-    Mod+D hotkey-overlay-title="Open Discord" { spawn "equibop" "--enable-features=UseOzonePlatform,WaylandWindowDecorations" "--ozone-platform=wayland" "--disable-gpu-sandbox" "--disable-features=WebRtcAllowInputVolumeAdjustment"; }
-    //Mod+D hotkey-overlay-title="Open Discord" { spawn "equibop"; }
-    Mod+E hotkey-overlay-title="Open dolphin" { spawn "dolphin"; }
-    // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
-    Mod+A hotkey-overlay-title="App Launcher: noctalia" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+M hotkey-overlay-title="Open Telegram" { spawn "materialgram"; }
-    Mod+S hotkey-overlay-title="Open Steam" { spawn "steam"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
+    // === App launchers ===
+    Mod+B hotkey-overlay-title="Browser: LibreWolf"      { spawn "librewolf"; }
+    Mod+D hotkey-overlay-title="Discord: Vesktop"        { spawn "vesktop"; }
+    Mod+E hotkey-overlay-title="File Manager: Dolphin"   { spawn "dolphin"; }
+    Mod+T hotkey-overlay-title="Terminal: Ghostty"       { spawn "ghostty"; }
+    Mod+M hotkey-overlay-title="Telegram: Materialgram"  { spawn "materialgram"; }
+    Mod+S hotkey-overlay-title="Steam"                   { spawn "steam"; }
+    Mod+F hotkey-overlay-title="Editor: Neovim (Ghostty)" { spawn "ghostty" "-e" "nvim"; }
+
+    // === Noctalia IPC ===
+    Mod+A hotkey-overlay-title="App Launcher: noctalia"     { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    Super+L hotkey-overlay-title="Lock Screen: noctalia"    { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
+    Mod+Space hotkey-overlay-title="Control Center"         { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
+    Mod+N hotkey-overlay-title="Notifications: toggle DND"  { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleDND"; }
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).
