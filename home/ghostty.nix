@@ -11,7 +11,14 @@
       # Общий вид
       window-padding-x = 12;
       window-padding-y = 12;
-      background-opacity = lib.mkForce 0.9;  # stylix ставит 1.0
+      background-opacity = lib.mkForce 0.85;  # stylix ставит 1.0
+      # Отключаем размытие фона — на Wayland/Niri оно превращается в solid
+      # (compositor не умеет корректно смешивать). Без него прозрачность
+      # работает и в focused, и в unfocused состоянии.
+      background-blur = false;
+      # linear-corrected — правильное смешивание alpha на Wayland компоsitor'ах
+      # (native выдаёт solid-looking результат из-за некорректного blending'а).
+      alpha-blending = "linear-corrected";
       confirm-close-surface = false;
       window-decoration = false;              # без CSD — niri сам рисует рамку
 

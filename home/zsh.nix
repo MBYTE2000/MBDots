@@ -15,12 +15,8 @@
     };
 
     shellAliases = {
-      # lsd
-      ls  = "lsd";
-      l   = "lsd -l";
-      la  = "lsd -a";
-      lla = "lsd -la";
-      lt  = "lsd --tree";
+      # ls/l/la/lla/lt/tree — все ставит programs.lsd (home/shell-tools.nix).
+      # Здесь только не-lsd алиасы.
 
       # QoL
       y     = "yazi";
