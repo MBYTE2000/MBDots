@@ -25,9 +25,7 @@
       dsh.enable        = lib.mkEnableOption "dsh (Nix bundles launcher)"    // { default = true; };
     };
 
-    hardware = {
-      nvidia.enable = lib.mkEnableOption "NVIDIA (проприетарный драйвер)";
-      # Реальный выбор идёт через ./gpu/current.nix (install.sh).
-    };
+    # Раньше здесь была hardware.nvidia.enable, но она нигде не читалась —
+    # NVIDIA конфигурируется через ./gpu/current.nix (install.sh).
   };
 }

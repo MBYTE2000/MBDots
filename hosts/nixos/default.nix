@@ -16,7 +16,7 @@
     services = {
       # По умолчанию всё выключено. Раскомментируй нужное:
       #docker.enable  = true;   # включает docker.service (не автозапуск)
-      #ollama.enable  = true;   # LLM runtime с CUDA
+      ollama.enable   = true;   # ставит `ollama` CLI; daemon запускать вручную: `ollama serve &`
       #comfyui.enable = true;   # требует раскомментировать comfyui-nix в flake.nix
       #wazuh.enable   = true;   # SIEM-агент (после ставить `wazuh-setup`)
       #ssh.enable     = true;
@@ -35,7 +35,8 @@
       dsh.enable         = true;
     };
 
-    hardware.nvidia.enable = true;
+    # hardware.nvidia.enable удалён — опция была декоративной, реальный
+    # NVIDIA-конфиг подключается через ./gpu/current.nix (install.sh).
   };
 
   # Пакеты из flake-inputs, доступные глобально
