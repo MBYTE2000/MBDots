@@ -13,7 +13,7 @@
     kdePackages.kdenlive
     yt-dlp
     # zoxide переехал в home/shell-tools.nix (programs.zoxide.enable=true)
-    steam
+    # steam переехал в modules/programs/steam.nix (programs.steam.enable=true)
     kdePackages.okular
     qbittorrent
     texlive.combined.scheme-full
