@@ -34,6 +34,11 @@
       gen-diff    = "nvd diff /run/current-system /nix/var/nix/profiles/system-*-link 2>/dev/null | tail -50";
 
       restart-noctalia = "pkill -f noctalia-shell && sleep 1 && nohup noctalia-shell > /dev/null 2>&1 &";
+
+      # dsh: NixOS-модуль префиксует профили (nix-tui / nix-web), а не tui/web.
+      # Короткие алиасы — чтобы не вспоминать это каждый раз.
+      dsh-tui = "dsh --profile nix-tui";
+      dsh-web = "dsh --profile nix-web";
     };
 
     oh-my-zsh = {
