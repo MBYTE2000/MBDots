@@ -12,7 +12,7 @@ import {
 import { preflight, renderChecks, requireRepo } from './lib/util.mjs';
 import {
   askDisk, askHostnameAndAliases, askUsername, askGpu, askTimezone,
-  askNetwork, askCategories, askLuksPassword, confirmWipe, confirmReboot,
+  askNetwork, askDataDisk, askCategories, askLuksPassword, confirmWipe, confirmReboot,
 } from './lib/prompts.mjs';
 import {
   prepareWorkdir, applyProfile, applyGpuProfile, stageLuksPassword,
@@ -54,6 +54,9 @@ async function main() {
   console.log(stepHeader(3, 10, 'Сеть'));
   const network = await askNetwork();
 
+  // 3b. Второй NVMe под /mnt/data
+  const dataDisk = await askDataDisk();
+
   // 4. Категории
   console.log(stepHeader(4, 10, 'Категории ПО'));
   const categories = await askCategories();
@@ -61,7 +64,7 @@ async function main() {
   // 5. LUKS
   const luksPassword = await askLuksPassword();
 
-  const cfg = { disk, hostname, aliases, username, gpu, timezone, network, categories };
+  const cfg = { disk, hostname, aliases, username, gpu, timezone, network, dataDisk, categories };
 
   // 6. Подтверждение
   console.log(summaryBox({

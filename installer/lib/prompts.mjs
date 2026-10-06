@@ -163,6 +163,17 @@ export async function askNetwork() {
   };
 }
 
+// --- Второй NVMe (вторичный диск под AI blobs / etc) --------------------
+export async function askDataDisk() {
+  const { enable } = await prompts({
+    type: 'toggle', name: 'enable',
+    message: 'У тебя есть вторичный NVMe под /mnt/data (ollama blobs/comfyui)?',
+    initial: false,  // по умолчанию нет — single-disk install
+    active: 'да', inactive: 'нет',
+  }, opts);
+  return enable;
+}
+
 // --- Категории ------------------------------------------------------------
 const CATEGORIES = [
   { name: 'dev',        title: 'Dev',        description: 'nvim/texlive/rust/python/claude-code' },

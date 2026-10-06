@@ -27,6 +27,12 @@
 
     # Раньше здесь была hardware.nvidia.enable, но она нигде не читалась —
     # NVIDIA конфигурируется через ./gpu/current.nix (install.sh).
+    hardware = {
+      # Второй NVMe с ext4 как /mnt/data. Используется для хранилища ollama
+      # (большие GGUF-блобы) и ComfyUI. На машинах без второго диска
+      # оставить false — ollama тогда использует ~/.ollama по-умолчанию.
+      dataDisk.enable = lib.mkEnableOption "вторичный NVMe как /mnt/data";
+    };
 
     # Категории — крупные группы пакетов/настроек. Installer собирает выбор
     # пользователя (чекбоксы) и выставляет эти флаги. Отдельные модули

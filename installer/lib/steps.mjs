@@ -102,9 +102,13 @@ export function applyProfile(work, cfg) {
     ],
   ]);
 
-  // hosts/nixos/default.nix — выставить флаги категорий + сервисы
+  // hosts/nixos/default.nix — выставить флаги категорий + сервисы + dataDisk
   const hostPath = join(work, 'hosts/nixos/default.nix');
   let hostSrc = readFileSync(hostPath, 'utf8');
+  hostSrc = hostSrc.replace(
+    /hardware\.dataDisk\.enable\s*=\s*(true|false);/,
+    `hardware.dataDisk.enable = ${cfg.dataDisk ? 'true' : 'false'};`,
+  );
   const catBlock = [
     '    categories = {',
     `      dev.enable        = ${cfg.categories.dev};`,

@@ -8,7 +8,10 @@ MODEL_NAME="qwen3.8-27b"
 MODEL_DIR="$HOME/AI/qwen3.8-27b"
 GGUF="$MODEL_DIR/Qwen3.8-27B-UD-Q3_K_XL.gguf"
 MODELFILE="$HOME/AI/qwen3.8-27b/Modelfile.generated"
-export OLLAMA_MODELS="/mnt/data/mbyte/ollama"
+# OLLAMA_MODELS уже выставлен системой если включён myConfig.hardware.dataDisk —
+# тогда он указывает на /mnt/data/mbyte/ollama. Иначе ollama использует
+# ~/.ollama по умолчанию. Здесь только fallback, если env совсем не задан.
+export OLLAMA_MODELS="${OLLAMA_MODELS:-$HOME/.ollama/models}"
 export OLLAMA_HOST="127.0.0.1:11434"
 export OLLAMA_KEEP_ALIVE="${OLLAMA_KEEP_ALIVE:-24h}"
 export OLLAMA_FLASH_ATTENTION=1
