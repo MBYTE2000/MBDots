@@ -1,8 +1,11 @@
 // Переводы для TUI. Выбор языка — первый промпт, до баннера.
 // Доступ: const t = STRINGS[lang]; console.log(t.disk);
+// Русский первым — install.sh сам ставит cyrillic console font и UTF-8 локаль
+// через nix-shell, так что на live ISO он читается нормально.
+// English — на случай если setfont не сработал (экзотическое железо/VM).
 export const LANGUAGES = [
-  { value: 'en', label: 'English (ASCII, safe on live ISO)' },
-  { value: 'ru', label: 'Russian / Russkiy (needs cyrillic font)' },
+  { value: 'ru', label: 'Русский (default)' },
+  { value: 'en', label: 'English (fallback, pure ASCII)' },
 ];
 
 export const STRINGS = {

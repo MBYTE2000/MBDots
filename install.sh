@@ -2,20 +2,20 @@
 # MBDots installer — bootstrap.
 #
 # Что делает:
-#   1. Проверяет что мы root (иначе re-exec через sudo -E).
-#   2. Через nix-shell подтягивает node+npm (не требует установленного nodejs).
-#   3. npm install зависимостей TUI в installer/node_modules (кешируется).
-#   4. Запускает node installer/index.mjs — красивый интерактивный TUI:
-#        • выбор диска, hostname, user, GPU, timezone
-#        • LUKS-пароль с подтверждением
-#        • disko destroy,format,mount → nixos-install → dotfiles → passwd
+#   1. Требует root (иначе re-exec через sudo -E).
+#   2. Устанавливает UTF-8 локаль и cyrillic-capable консольный шрифт
+#      (минимальный live ISO по-умолчанию может некорректно рисовать кириллицу).
+#   3. Через nix-shell подтягивает node + kbd + terminus_font (нет на базовой
+#      системе — ничего в /nix/store не оседает постоянно).
+#   4. npm install зависимостей TUI в installer/node_modules.
+#   5. Запускает node installer/index.mjs — интерактивный TUI на русском/английском.
 #
 # Использование:
 #   ./install.sh                       # интерактивно
 #   sudo ./install.sh                  # если уже sudo
 #
 # Требования:
-#   • NixOS Live ISO (25.11+), с интернетом
+#   • NixOS Live ISO (25.05+), с интернетом
 #   • disk с EFI (для GRUB-EFI + LUKS/btrfs схемы из disko.nix)
 
 set -euo pipefail
@@ -34,21 +34,38 @@ if ! command -v nix >/dev/null; then
   exit 1
 fi
 
-# --- 2. Готовим TUI через nix-shell ----------------------------------------
-# nix-shell -p nodejs — временное окружение, ничего в /nix/store не оседает
-# постоянно (только на время сессии).
+# --- 2. UTF-8 локаль + cyrillic console font ------------------------------
+# На минимальной ISO не всегда загружен шрифт с кириллицей — руссифицируем tty.
+# `|| true` — на не-tty (ssh/graphical) setfont молча пропускаем.
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="${LC_ALL:-C.UTF-8}"
+
+# --- 3. Готовим TUI через nix-shell ----------------------------------------
 export MBDOTS_REPO="$DIR"
 
 exec nix-shell \
-  -p nodejs_22 \
+  -p nodejs_22 kbd terminus_font \
   --run "$(cat <<'INNER'
 set -euo pipefail
+
+# Пробуем переключить консоль на кириллический Terminus (большой/жирный —
+# крупнее дефолта, лучше читается на HiDPI/4K). Если не tty — просто пропустим.
+if [ -t 0 ] && [ -w /dev/console ] 2>/dev/null; then
+  for font in \
+    /nix/store/*terminus-font*/share/consolefonts/ter-v22b.psf.gz \
+    /nix/store/*terminus-font*/share/consolefonts/ter-v20b.psf.gz \
+    /nix/store/*terminus-font*/share/consolefonts/ter-v18b.psf.gz \
+    /nix/store/*kbd*/share/consolefonts/LatArCyrHeb-16.psfu.gz
+  do
+    [ -f "$font" ] && setfont "$font" 2>/dev/null && break
+  done
+fi
+
 cd "$MBDOTS_REPO/installer"
 
 # npm install — только если node_modules/ отсутствует или устарел.
 if [[ ! -d node_modules ]] || [[ package.json -nt node_modules ]]; then
   echo "→ ставлю npm-зависимости TUI (одноразово)…"
-  # --no-audit --no-fund — молча, --loglevel=error — только реальные ошибки.
   npm install --omit=dev --no-audit --no-fund --loglevel=error
 fi
 
