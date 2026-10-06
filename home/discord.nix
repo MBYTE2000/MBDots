@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ osConfig, pkgs, lib, ... }:
 # Discord через nixcord + Vesktop.
 #
 # Почему Vesktop, а не официальный Discord + Vencord:
@@ -14,7 +14,7 @@
 #     (у portal-gtk нет ScreenCast — недостаточно)
 #   - systemd.user.services.xdg-desktop-portal-gnome.environment.GSK_RENDERER = "gl"
 #     (обход краша GNOME portal на Nvidia proprietary)
-{
+lib.mkIf osConfig.myConfig.categories.comms.enable {
   programs.nixcord = {
     enable = true;
 

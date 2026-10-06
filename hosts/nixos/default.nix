@@ -14,9 +14,9 @@
   # Сервисы, отключённые по умолчанию — включаем то, что нужно ИМЕННО этому ПК.
   myConfig = {
     services = {
-      # По умолчанию всё выключено. Раскомментируй нужное:
+      # Сервисы, выключенные по умолчанию. Раскомментируй нужное:
       #docker.enable  = true;   # включает docker.service (не автозапуск)
-      ollama.enable   = true;   # ставит `ollama` CLI; daemon запускать вручную: `ollama serve &`
+      ollama.enable   = true;   # ollama CLI с CUDA; daemon поднимает run-qwen или вручную
       #comfyui.enable = true;   # требует раскомментировать comfyui-nix в flake.nix
       #wazuh.enable   = true;   # SIEM-агент (после ставить `wazuh-setup`)
       #ssh.enable     = true;
@@ -35,8 +35,16 @@
       dsh.enable         = true;
     };
 
-    # hardware.nvidia.enable удалён — опция была декоративной, реальный
-    # NVIDIA-конфиг подключается через ./gpu/current.nix (install.sh).
+    # Категории "крупных" групп. Установщик соберёт их по чекбоксам.
+    categories = {
+      dev.enable        = true;
+      gaming.enable     = true;
+      ai.enable         = true;
+      multimedia.enable = true;
+      office.enable     = true;
+      comms.enable      = true;
+      fileshare.enable  = true;
+    };
   };
 
   # Пакеты из flake-inputs, доступные глобально

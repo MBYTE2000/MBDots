@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 # programs.steam.enable = true — правильный способ поставить Steam в NixOS.
 # Даёт FHS-окружение (steam-run), 32-bit graphics libs, udev-правила для
 # контроллеров, gamescope-интеграцию, разрешения для friends/voice.
 # Просто `pkgs.steam` в home.packages НЕ работает: бинарь есть, но окружения нет.
-{
+lib.mkIf config.myConfig.categories.gaming.enable {
   programs.steam = {
     enable = true;
 

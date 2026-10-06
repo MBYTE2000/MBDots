@@ -27,5 +27,19 @@
 
     # Раньше здесь была hardware.nvidia.enable, но она нигде не читалась —
     # NVIDIA конфигурируется через ./gpu/current.nix (install.sh).
+
+    # Категории — крупные группы пакетов/настроек. Installer собирает выбор
+    # пользователя (чекбоксы) и выставляет эти флаги. Отдельные модули
+    # (home/packages-*.nix, modules/programs/steam.nix и т.д.) гейтятся
+    # через `mkIf config.myConfig.categories.<name>.enable`.
+    categories = {
+      dev.enable        = lib.mkEnableOption "Dev tools (nvim/texlive/rust/python)"       // { default = true; };
+      gaming.enable     = lib.mkEnableOption "Gaming (steam/proton/lutris/launchers)"     // { default = true; };
+      ai.enable         = lib.mkEnableOption "AI/ML (ollama+cuda/huggingface/run-qwen)"   // { default = true; };
+      multimedia.enable = lib.mkEnableOption "Multimedia (gimp/kdenlive/vlc/chromium)"    // { default = true; };
+      office.enable     = lib.mkEnableOption "Office (onlyoffice/okular)"                 // { default = true; };
+      comms.enable      = lib.mkEnableOption "Communications (vesktop/materialgram)"      // { default = true; };
+      fileshare.enable  = lib.mkEnableOption "File sharing (qbittorrent)"                 // { default = true; };
+    };
   };
 }
