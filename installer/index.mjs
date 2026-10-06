@@ -112,8 +112,13 @@ async function main() {
 
     console.log(stepHeader(6, 10, t.stepCopy));
     const cp = ora(t.copying).start();
-    copyConfigToTarget(work);
-    cp.succeed(t.copyDone);
+    try {
+      await copyConfigToTarget(work);
+      cp.succeed(t.copyDone);
+    } catch (e) {
+      cp.fail(t.copying + ' — ' + (e.message || e));
+      throw e;
+    }
 
     await generateHardwareConfig();
     await runNixosInstall(cfg);

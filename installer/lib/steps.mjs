@@ -183,17 +183,41 @@ export async function runDisko(work, disk) {
   ]);
 }
 
-export function copyConfigToTarget(work) {
+// Проверяет что disko реально смонтировал /mnt (точка монтирования).
+// Иначе дальнейшие шаги "работают" с /mnt на live-ISO (tmpfs!) — файлы попадут
+// в оперативку и исчезнут после перезагрузки.
+export async function verifyMntMounted() {
+  const r = await execa('mountpoint', ['-q', '/mnt'], { reject: false });
+  if (r.exitCode !== 0) {
+    throw new Error(
+      '/mnt is NOT a mount point. Disko likely failed above — scroll up and ' +
+      'look for its error. Nothing was written to the target disk.',
+    );
+  }
+}
+
+export async function copyConfigToTarget(work) {
+  await verifyMntMounted();
   const target = '/mnt/etc/nixos';
-  mkdirSync(target, { recursive: true });
-  cpSync(work, target, {
-    recursive: true,
-    filter: (src) => !/\/(\.git|node_modules|result|result-.*)$/.test(src),
-  });
+  // mkdir + cp -a — предсказуемее cpSync (у того filter + cross-FS иногда квёл).
+  await execa('mkdir', ['-p', target]);
+  // `${work}/.` — скопировать СОДЕРЖИМОЕ, не саму директорию.
+  await execa('cp', ['-a', `${work}/.`, target]);
+  // Убираем ненужное из таргета (node_modules тяжёлые, .git чувствительный).
+  for (const unwanted of ['.git', 'node_modules', 'result', 'result-*']) {
+    await execa('sh', ['-c', `rm -rf ${target}/${unwanted}`], { reject: false });
+  }
+  // Удостоверимся что ключевые файлы реально оказались на месте.
+  for (const must of ['flake.nix', 'hosts/nixos/default.nix', 'modules', 'home']) {
+    if (!existsSync(`${target}/${must}`)) {
+      throw new Error(`Copy failed: ${target}/${must} missing after cp -a`);
+    }
+  }
 }
 
 export async function generateHardwareConfig() {
   console.log(stepHeader(7, 10, 'Генерация hardware-configuration.nix'));
+  await verifyMntMounted();
   await shStream('nixos-generate-config', ['--root', '/mnt', '--force']);
 }
 
