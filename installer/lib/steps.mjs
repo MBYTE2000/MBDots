@@ -199,7 +199,10 @@ export async function verifyMntMounted() {
 export async function copyConfigToTarget(work) {
   await verifyMntMounted();
   const target = '/mnt/etc/nixos';
-  // mkdir + cp -a — предсказуемее cpSync (у того filter + cross-FS иногда квёл).
+  // Чистим то что могло остаться от предыдущей попытки / live-ISO.
+  // GNU mkdir -p падает с "File exists" если на пути файл или symlink
+  // (а не каталог) — а на /mnt после disko-mount это может быть артефакт.
+  await execa('rm', ['-rf', target], { reject: false });
   await execa('mkdir', ['-p', target]);
   // `${work}/.` — скопировать СОДЕРЖИМОЕ, не саму директорию.
   await execa('cp', ['-a', `${work}/.`, target]);
