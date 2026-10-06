@@ -1,15 +1,17 @@
-// Интерактивные промпты установщика. Все обёрнуты в onCancel → exit(130),
-// чтобы Ctrl-C не оставлял установку в полу-состоянии.
+// Интерактивные промпты установщика. Все обёрнуты в onCancel → exit(130).
+// Строки берутся из t: см. lib/i18n.mjs. Язык выбирается первым промптом.
 import prompts from 'prompts';
 import chalk from 'chalk';
 import { c } from './branding.mjs';
 import { listDisks } from './util.mjs';
+import { LANGUAGES, STRINGS } from './i18n.mjs';
 
-function onCancel() {
-  console.log('\n' + c.err('Отменено пользователем.'));
-  process.exit(130);
+function makeCancel(msg) {
+  return () => {
+    console.log('\n' + c.err(msg));
+    process.exit(130);
+  };
 }
-const opts = { onCancel };
 
 const HOSTNAME_RE = /^[a-zA-Z][a-zA-Z0-9-]{0,62}$/;
 const USERNAME_RE = /^[a-z_][a-z0-9_-]{0,31}$/;
@@ -21,10 +23,23 @@ const TIMEZONES = [
   'Asia/Yerevan', 'Asia/Tashkent', 'UTC',
 ];
 
+// --- Language (ASCII-only, first prompt) ---------------------------------
+export async function askLang() {
+  const onCancel = () => { console.log('\nCancelled.'); process.exit(130); };
+  const { lang } = await prompts({
+    type: 'select', name: 'lang',
+    message: 'Language / Yazyk:',
+    choices: LANGUAGES.map(l => ({ title: l.label, value: l.value })),
+    initial: 0,
+  }, { onCancel });
+  return lang;
+}
+
 // --- Диск -----------------------------------------------------------------
-export async function askDisk() {
+export async function askDisk(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const disks = await listDisks();
-  if (disks.length === 0) throw new Error('Нет дисков (lsblk -d).');
+  if (disks.length === 0) throw new Error('No disks (lsblk -d).');
 
   const choices = disks.map((d) => {
     const badges = [
@@ -34,7 +49,7 @@ export async function askDisk() {
       d.mounted ? chalk.red('mounted') : null,
     ].filter(Boolean).join(' ');
     return {
-      title: `${d.path.padEnd(16)} ${chalk.bold(d.size.padStart(8))}  ${d.model || chalk.gray('(без модели)')}`,
+      title: `${d.path.padEnd(16)} ${chalk.bold(d.size.padStart(8))}  ${d.model || chalk.gray('(no model)')}`,
       description: badges,
       value: d.path,
       disabled: d.readonly,
@@ -43,25 +58,26 @@ export async function askDisk() {
 
   const { disk } = await prompts({
     type: 'select', name: 'disk',
-    message: 'Целевой диск (ДАННЫЕ БУДУТ СТЁРТЫ):',
-    choices, hint: '↑↓ выбор, Enter подтвердить',
+    message: t.pickDisk,
+    choices, hint: t.pickDiskHint,
   }, opts);
   return disk;
 }
 
 // --- Hostname + aliases ---------------------------------------------------
-export async function askHostnameAndAliases(defaultHost = 'nixos') {
+export async function askHostnameAndAliases(t, defaultHost = 'nixos') {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { hostname } = await prompts({
     type: 'text', name: 'hostname',
-    message: 'Hostname:',
+    message: t.hostnameLabel,
     initial: defaultHost,
-    validate: v => HOSTNAME_RE.test(v.trim()) || 'Невалидный hostname',
+    validate: v => HOSTNAME_RE.test(v.trim()) || t.hostnameBad,
     format: v => v.trim(),
   }, opts);
 
   const { aliasesStr } = await prompts({
     type: 'text', name: 'aliasesStr',
-    message: `Дополнительные алиасы (через запятую, пример: "${hostname}.local, pc"):`,
+    message: t.aliasesLabel,
     initial: `${hostname}.local`,
     format: v => v.trim(),
   }, opts);
@@ -72,27 +88,28 @@ export async function askHostnameAndAliases(defaultHost = 'nixos') {
 }
 
 // --- Username -------------------------------------------------------------
-export async function askUsername(defaultVal = 'mbyte') {
+export async function askUsername(t, defaultVal = 'mbyte') {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { username } = await prompts({
     type: 'text', name: 'username',
-    message: 'Основной пользователь:',
+    message: t.usernameLabel,
     initial: defaultVal,
-    validate: v => USERNAME_RE.test(v.trim()) ||
-      'Строчные буквы/цифры/дефис/подчёркивание, первый — буква или _',
+    validate: v => USERNAME_RE.test(v.trim()) || t.usernameBad,
     format: v => v.trim(),
   }, opts);
   return username;
 }
 
 // --- GPU ------------------------------------------------------------------
-export async function askGpu() {
+export async function askGpu(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { gpu } = await prompts({
-    type: 'select', name: 'gpu', message: 'GPU-профиль:',
+    type: 'select', name: 'gpu', message: t.gpuLabel,
     choices: [
-      { title: 'NVIDIA', description: 'проприетарный драйвер (nvidiaPackages.beta)', value: 'nvidia' },
-      { title: 'AMD',    description: 'amdgpu / mesa',                               value: 'amd' },
-      { title: 'Intel',  description: 'i965/iHD, VAAPI',                             value: 'intel' },
-      { title: 'None',   description: 'без отдельного GPU (VM/сервер)',              value: 'none' },
+      { title: 'NVIDIA', description: 'proprietary (nvidiaPackages.beta)', value: 'nvidia' },
+      { title: 'AMD',    description: 'amdgpu / mesa',                     value: 'amd' },
+      { title: 'Intel',  description: 'i965/iHD, VAAPI',                   value: 'intel' },
+      { title: 'None',   description: 'no dedicated GPU (VM/server)',      value: 'none' },
     ],
     initial: 0,
   }, opts);
@@ -100,10 +117,11 @@ export async function askGpu() {
 }
 
 // --- Timezone -------------------------------------------------------------
-export async function askTimezone() {
+export async function askTimezone(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { timezone } = await prompts({
     type: 'autocomplete', name: 'timezone',
-    message: 'Timezone (набирай для фильтра):',
+    message: t.tzLabel,
     choices: TIMEZONES.map(tz => ({ title: tz, value: tz })),
     initial: 0,
     suggest: (input, choices) =>
@@ -113,44 +131,42 @@ export async function askTimezone() {
 }
 
 // --- Network: static (default) / dhcp -------------------------------------
-export async function askNetwork() {
+export async function askNetwork(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { mode } = await prompts({
     type: 'select', name: 'mode',
-    message: 'Сеть:',
+    message: t.netLabel,
     choices: [
-      { title: 'Статический IP', description: 'рекомендовано для домашней сети', value: 'static' },
-      { title: 'DHCP',           description: 'автоматически от роутера',        value: 'dhcp' },
+      { title: t.netStatic, value: 'static' },
+      { title: t.netDhcp,   value: 'dhcp' },
     ],
-    initial: 0,  // static по умолчанию
+    initial: 0,
   }, opts);
 
-  if (mode === 'dhcp') {
-    return { mode: 'dhcp' };
-  }
+  if (mode === 'dhcp') return { mode: 'dhcp' };
 
-  // static — спрашиваем параметры (у текущей машины: enp11s0, 10.20.0.10/16, gw/dns 10.20.0.1)
   const r = await prompts([
     {
-      type: 'text', name: 'interface', message: 'Сетевой интерфейс:',
+      type: 'text', name: 'interface', message: t.ifaceLabel,
       initial: 'enp11s0',
-      validate: v => v.trim().length > 0 || 'Пустое не годится',
+      validate: v => v.trim().length > 0 || 'empty',
     },
     {
-      type: 'text', name: 'address', message: 'IP с маской (CIDR):',
+      type: 'text', name: 'address', message: t.cidrLabel,
       initial: '10.20.0.10/16',
-      validate: v => CIDR_RE.test(v.trim()) || 'Формат: 10.20.0.10/16',
+      validate: v => CIDR_RE.test(v.trim()) || t.cidrBad,
       format: v => v.trim(),
     },
     {
-      type: 'text', name: 'gateway', message: 'Шлюз:',
+      type: 'text', name: 'gateway', message: t.gwLabel,
       initial: '10.20.0.1',
-      validate: v => IP_RE.test(v.trim()) || 'Формат: 10.20.0.1',
+      validate: v => IP_RE.test(v.trim()) || t.gwBad,
       format: v => v.trim(),
     },
     {
-      type: 'text', name: 'dns', message: 'DNS (через запятую):',
+      type: 'text', name: 'dns', message: t.dnsLabel,
       initial: '10.20.0.1',
-      validate: v => v.split(',').every(x => IP_RE.test(x.trim())) || 'Список IP через запятую',
+      validate: v => v.split(',').every(x => IP_RE.test(x.trim())) || t.dnsBad,
       format: v => v.trim(),
     },
   ], opts);
@@ -163,13 +179,14 @@ export async function askNetwork() {
   };
 }
 
-// --- Второй NVMe (вторичный диск под AI blobs / etc) --------------------
-export async function askDataDisk() {
+// --- Второй NVMe ----------------------------------------------------------
+export async function askDataDisk(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { enable } = await prompts({
     type: 'toggle', name: 'enable',
-    message: 'У тебя есть вторичный NVMe под /mnt/data (ollama blobs/comfyui)?',
-    initial: false,  // по умолчанию нет — single-disk install
-    active: 'да', inactive: 'нет',
+    message: t.dataDiskLabel,
+    initial: false,
+    active: t.yes, inactive: t.no,
   }, opts);
   return enable;
 }
@@ -185,36 +202,31 @@ const CATEGORIES = [
   { name: 'fileshare',  title: 'Fileshare',  description: 'qbittorrent' },
 ];
 
-export async function askCategories() {
+export async function askCategories(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { mode } = await prompts({
-    type: 'select', name: 'mode',
-    message: 'Что ставим?',
+    type: 'select', name: 'mode', message: t.categoriesLabel,
     choices: [
-      { title: 'Полный конфиг (все категории)',       value: 'all' },
-      { title: 'Выбрать категории вручную',           value: 'pick' },
-      { title: 'Минимум (только base + desktop)',     value: 'minimal' },
+      { title: t.catFull,    value: 'all' },
+      { title: t.catPick,    value: 'pick' },
+      { title: t.catMinimal, value: 'minimal' },
     ],
     initial: 0,
   }, opts);
 
-  if (mode === 'all') {
-    return Object.fromEntries(CATEGORIES.map(c => [c.name, true]));
-  }
-  if (mode === 'minimal') {
-    return Object.fromEntries(CATEGORIES.map(c => [c.name, false]));
-  }
+  if (mode === 'all')     return Object.fromEntries(CATEGORIES.map(c => [c.name, true]));
+  if (mode === 'minimal') return Object.fromEntries(CATEGORIES.map(c => [c.name, false]));
 
-  // pick: multiselect с чекбоксами
   const { picked } = await prompts({
     type: 'multiselect', name: 'picked',
-    message: 'Отметь нужные (пробел — переключить, Enter — подтвердить, A — все):',
+    message: t.catMultiMsg,
     choices: CATEGORIES.map(cat => ({
       title: cat.title,
       description: cat.description,
       value: cat.name,
-      selected: true,  // по умолчанию все отмечены
+      selected: true,
     })),
-    hint: '— использовать Space для toggle, A для «все/никто»',
+    hint: t.catMultiHint,
     instructions: false,
     min: 0,
   }, opts);
@@ -225,36 +237,39 @@ export async function askCategories() {
 }
 
 // --- LUKS -----------------------------------------------------------------
-export async function askLuksPassword() {
+export async function askLuksPassword(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   while (true) {
     const { p1 } = await prompts({
       type: 'password', name: 'p1',
-      message: 'LUKS-пароль:',
-      validate: v => v.length >= 6 || 'Минимум 6 символов',
+      message: t.luksLabel,
+      validate: v => v.length >= 6 || t.luksShort,
     }, opts);
     const { p2 } = await prompts({
-      type: 'password', name: 'p2', message: 'Повтор:',
+      type: 'password', name: 'p2', message: t.luksRepeat,
     }, opts);
     if (p1 === p2) return p1;
-    console.log(c.err('  Пароли не совпадают, ещё раз.'));
+    console.log(c.err(t.luksMismatch));
   }
 }
 
 // --- Финальное подтверждение ---------------------------------------------
-export async function confirmWipe(cfg) {
+export async function confirmWipe(t, cfg) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { ok } = await prompts({
     type: 'text', name: 'ok',
-    message: `Введи ${chalk.red.bold("'YES'")} чтобы стереть ${cfg.disk}:`,
-    validate: v => v === 'YES' || "Введи именно 'YES' заглавными",
+    message: t.wipeConfirm(cfg.disk),
+    validate: v => v === 'YES' || t.wipeConfirmBad,
   }, opts);
   return ok === 'YES';
 }
 
-export async function confirmReboot() {
+export async function confirmReboot(t) {
+  const opts = { onCancel: makeCancel(t.cancelled) };
   const { r } = await prompts({
     type: 'toggle', name: 'r',
-    message: 'Перезагрузиться сейчас?',
-    initial: false, active: 'да', inactive: 'нет',
+    message: t.rebootQuestion,
+    initial: false, active: t.yes, inactive: t.no,
   }, opts);
   return r;
 }

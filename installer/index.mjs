@@ -10,9 +10,11 @@ import {
   banner, stepHeader, summaryBox, warningBox, successBox, c,
 } from './lib/branding.mjs';
 import { preflight, renderChecks, requireRepo } from './lib/util.mjs';
+import { STRINGS } from './lib/i18n.mjs';
 import {
-  askDisk, askHostnameAndAliases, askUsername, askGpu, askTimezone,
-  askNetwork, askDataDisk, askCategories, askLuksPassword, confirmWipe, confirmReboot,
+  askLang, askDisk, askHostnameAndAliases, askUsername, askGpu, askTimezone,
+  askNetwork, askDataDisk, askCategories, askLuksPassword,
+  confirmWipe, confirmReboot,
 } from './lib/prompts.mjs';
 import {
   prepareWorkdir, applyProfile, applyGpuProfile, stageLuksPassword,
@@ -23,72 +25,75 @@ import {
 
 const repoPath = process.argv[2];
 if (!repoPath) {
-  console.error(c.err('Использование: node index.mjs <путь к репо>'));
+  console.error(c.err('Usage: node index.mjs <path to repo>'));
   process.exit(2);
 }
 
 async function main() {
   process.stdout.write('\x1Bc');
+
+  // 0. Language (ASCII prompt — before anything else, so font issues don't break it)
+  const lang = await askLang();
+  const t = STRINGS[lang];
+
   console.log(banner());
 
   // 1. Preflight
-  console.log(stepHeader(1, 10, 'Предполётные проверки'));
+  console.log(stepHeader(1, 10, t.stepPreflight));
   const checks = await preflight();
   console.log(renderChecks(checks));
   if (checks.some(r => !r.ok)) {
-    console.log(c.err('Часть проверок провалилась.'));
+    console.log(c.err(t.checksFailed));
     process.exit(1);
   }
   requireRepo(repoPath);
-  console.log(c.ok('  ✓  Репозиторий MBDots корректный') + '\n');
+  console.log(c.ok(t.checksOk) + '\n');
 
-  // 2. Диск + hostname + user + GPU + timezone
-  console.log(stepHeader(2, 10, 'Основные параметры'));
-  const disk     = await askDisk();
-  const { hostname, aliases } = await askHostnameAndAliases('nixos');
-  const username = await askUsername('mbyte');
-  const gpu      = await askGpu();
-  const timezone = await askTimezone();
+  // 2. Main parameters
+  console.log(stepHeader(2, 10, t.stepMain));
+  const disk     = await askDisk(t);
+  const { hostname, aliases } = await askHostnameAndAliases(t, 'nixos');
+  const username = await askUsername(t, 'mbyte');
+  const gpu      = await askGpu(t);
+  const timezone = await askTimezone(t);
 
-  // 3. Сеть (static — default)
-  console.log(stepHeader(3, 10, 'Сеть'));
-  const network = await askNetwork();
+  // 3. Network
+  console.log(stepHeader(3, 10, t.stepNetwork));
+  const network = await askNetwork(t);
+  const dataDisk = await askDataDisk(t);
 
-  // 3b. Второй NVMe под /mnt/data
-  const dataDisk = await askDataDisk();
-
-  // 4. Категории
-  console.log(stepHeader(4, 10, 'Категории ПО'));
-  const categories = await askCategories();
+  // 4. Categories
+  console.log(stepHeader(4, 10, t.stepCategories));
+  const categories = await askCategories(t);
 
   // 5. LUKS
-  const luksPassword = await askLuksPassword();
+  const luksPassword = await askLuksPassword(t);
 
   const cfg = { disk, hostname, aliases, username, gpu, timezone, network, dataDisk, categories };
 
-  // 6. Подтверждение
+  // 6. Confirm
   console.log(summaryBox({
     ...cfg,
     network: network.mode === 'static'
       ? `static ${network.address} via ${network.gateway} on ${network.interface}`
       : 'dhcp',
-    aliases: aliases.length ? aliases.join(', ') : '(нет)',
-    categories: Object.entries(categories).filter(([, v]) => v).map(([k]) => k).join(', ') || '(минимум)',
-  }));
-  console.log(warningBox(
-    `Диск ${cfg.disk} будет ПОЛНОСТЬЮ ОЧИЩЕН,\n` +
-    'разбит по disko.nix (ESP + LUKS → btrfs subvolumes),\n' +
-    'и на него будет установлен NixOS с этим репо.',
-  ));
-  if (!await confirmWipe(cfg)) { console.log(c.err('Отменено.')); process.exit(1); }
+    aliases: aliases.length ? aliases.join(', ') : '(none)',
+    categories: Object.entries(categories).filter(([, v]) => v).map(([k]) => k).join(', ') || '(minimal)',
+    dataDisk: dataDisk ? t.yes : t.no,
+  }, t.summaryTitle));
+  console.log(warningBox(t.warnBody(cfg.disk), t.warnTitle));
+  if (!await confirmWipe(t, cfg)) {
+    console.log(c.err(t.cancelled));
+    process.exit(1);
+  }
 
-  // 7-10. Установка
-  const spin = ora({ text: 'Рабочая копия конфига…', color: 'cyan' }).start();
+  // 7-10. Install
+  const spin = ora({ text: 'Working copy...', color: 'cyan' }).start();
   const work = await prepareWorkdir(repoPath);
   applyProfile(work, cfg);
   applyGpuProfile(work, cfg.gpu);
   stageLuksPassword(work, luksPassword);
-  spin.succeed('Рабочая копия готова: ' + c.dim(work));
+  spin.succeed(t.workdirReady(work));
 
   let cleanedUp = false;
   const cleanup = () => {
@@ -105,55 +110,55 @@ async function main() {
     await runDisko(work, cfg.disk);
     clearLuksPassword(work);
 
-    console.log(stepHeader(6, 10, 'Копирование конфига в /mnt/etc/nixos'));
-    const cp = ora('Копирую…').start();
+    console.log(stepHeader(6, 10, t.stepCopy));
+    const cp = ora(t.copying).start();
     copyConfigToTarget(work);
-    cp.succeed('Готово');
+    cp.succeed(t.copyDone);
 
     await generateHardwareConfig();
     await runNixosInstall(cfg);
 
-    const dot = ora('Dot-файлы + repo в $HOME…').start();
+    const dot = ora('Dotfiles...').start();
     installUserDotfiles(work, cfg.username);
     await copyToRepoHome(work, cfg.username);
     await chownUserHome(cfg.username);
-    dot.succeed('Готово: ~/.config + ~/nixos-config (→ /etc/nixos)');
+    dot.succeed(t.dotfilesDone);
 
     await setUserPassword(cfg.username);
   } catch (err) {
-    console.log('\n' + c.err('Ошибка:') + ' ' + c.dim(err.message || err));
-    console.log(c.warn('  Рабочая копия сохранена для разбора: ' + work));
+    console.log('\n' + c.err('Error:') + ' ' + c.dim(err.message || err));
+    console.log(c.warn('  Work dir kept for debug: ' + work));
     cleanedUp = true;
     process.exit(1);
   }
 
   console.log(successBox(
-    `Система установлена.\n\n` +
+    `${t.installedOk}\n\n` +
     `  hostname    ${chalk.bold(cfg.hostname)}` +
     (cfg.aliases.length ? ` (aliases: ${cfg.aliases.join(', ')})` : '') + `\n` +
     `  user        ${chalk.bold(cfg.username)}\n` +
     `  gpu         ${chalk.bold(cfg.gpu)}\n` +
     `  network     ${chalk.bold(cfg.network.mode)}` +
       (cfg.network.mode === 'static' ? ` (${cfg.network.address})` : '') + `\n` +
-    `  categories  ${chalk.bold(Object.entries(cfg.categories).filter(([,v])=>v).map(([k])=>k).join(', ') || 'минимум')}\n\n` +
-    `На новой системе:\n` +
-    `  • /etc/nixos → /home/${cfg.username}/nixos-config (git-репо)\n` +
-    `  • alias ${chalk.bold('update')} → nixos-rebuild switch --flake /etc/nixos#${cfg.hostname}`,
+    `  dataDisk    ${cfg.dataDisk ? t.yes : t.no}\n` +
+    `  categories  ${chalk.bold(Object.entries(cfg.categories).filter(([,v])=>v).map(([k])=>k).join(', ') || 'minimal')}\n\n` +
+    `/etc/nixos -> /home/${cfg.username}/nixos-config (git repo)\n` +
+    `alias ${chalk.bold('update')} -> nixos-rebuild switch --flake /etc/nixos#${cfg.hostname}`,
+    t.successTitle,
   ));
 
-  // Явный cleanup перед exit — чтобы не остались /tmp/mbdots-XXX и pwfile.
   cleanup();
-  console.log(c.ok('Временные файлы установщика удалены.'));
+  console.log(c.ok(t.tempCleaned));
 
-  if (await confirmReboot()) {
-    console.log(c.step('Отмонтирую /mnt и перезагружаю…'));
+  if (await confirmReboot(t)) {
+    console.log(c.step(t.unmounting));
     await execa('sh', ['-c', 'umount -R /mnt || true; reboot'], { stdio: 'inherit' });
   } else {
-    console.log(c.dim('  umount -R /mnt && reboot когда будешь готов.') + '\n');
+    console.log(c.dim(t.nothingNow) + '\n');
   }
 }
 
 main().catch(err => {
-  console.error(c.err('Критическая ошибка: ') + (err.stack || err.message || err));
+  console.error(c.err('Fatal: ') + (err.stack || err.message || err));
   process.exit(1);
 });

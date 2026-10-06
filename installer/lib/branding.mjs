@@ -52,43 +52,46 @@ export function stepHeader(n, total, title) {
   );
 }
 
-export function summaryBox(cfg) {
+export function summaryBox(cfg, title = 'Installation parameters') {
   const body = [
-    c.kv('Диск:', cfg.disk),
-    c.kv('Hostname:', cfg.hostname),
-    c.kv('Пользователь:', cfg.username),
-    c.kv('GPU:', cfg.gpu),
-    c.kv('Timezone:', cfg.timezone),
-    c.kv('LUKS:', '••••••••'),
-  ].join('\n');
+    c.kv('Disk:',       cfg.disk),
+    c.kv('Hostname:',   cfg.hostname + (cfg.aliases ? ` (${cfg.aliases})` : '')),
+    c.kv('User:',       cfg.username),
+    c.kv('GPU:',        cfg.gpu),
+    c.kv('Timezone:',   cfg.timezone),
+    c.kv('Network:',    typeof cfg.network === 'string' ? cfg.network : cfg.network.mode),
+    c.kv('DataDisk:',   cfg.dataDisk ?? ''),
+    c.kv('Categories:', cfg.categories ?? ''),
+    c.kv('LUKS:',       '••••••••'),
+  ].filter(l => !l.endsWith('')).join('\n');
   return boxen(body, {
     padding: 1,
     margin: { top: 1, bottom: 1, left: 0, right: 0 },
     borderStyle: 'round',
     borderColor: '#B15CFF',
-    title: chalk.bold('Параметры установки'),
+    title: chalk.bold(title),
     titleAlignment: 'center',
   });
 }
 
-export function warningBox(text) {
+export function warningBox(text, title = 'WARNING') {
   return boxen(chalk.yellow.bold(text), {
     padding: 1,
     margin: { top: 1, bottom: 1, left: 0, right: 0 },
     borderStyle: 'double',
     borderColor: '#FFB454',
-    title: '⚠  ВНИМАНИЕ',
+    title: `!  ${title}`,
     titleAlignment: 'center',
   });
 }
 
-export function successBox(text) {
+export function successBox(text, title = 'Done') {
   return boxen(chalk.green(text), {
     padding: 1,
     margin: { top: 1, bottom: 1, left: 0, right: 0 },
     borderStyle: 'round',
     borderColor: 'green',
-    title: '✓  Готово',
+    title: `OK  ${title}`,
     titleAlignment: 'center',
   });
 }

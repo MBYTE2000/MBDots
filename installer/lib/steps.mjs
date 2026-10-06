@@ -68,10 +68,13 @@ export function applyProfile(work, cfg) {
       '# DHCP: NetworkManager даст адрес сам.',
     );
   }
-  // 3) hostname aliases через networking.hosts (127.0.0.1 → aliases)
+  // 3) hostname aliases через networking.hosts — вставляем ВНУТРЬ top-level
+  // attrset (перед последней `}`), иначе получим syntax error в nix.
   if (cfg.aliases && cfg.aliases.length > 0) {
     const aliasesLine = cfg.aliases.map(a => `"${a}"`).join(' ');
-    netSrc = netSrc.trimEnd() + `\n\n  networking.hosts."127.0.0.1" = [ ${aliasesLine} ];\n`;
+    const insertion = `\n  networking.hosts."127.0.0.1" = [ ${aliasesLine} ];\n`;
+    // Заменяем последнюю `\n}` (с опциональным whitespace) на insertion + `\n}`
+    netSrc = netSrc.replace(/\n}\s*$/, insertion + '\n}\n');
   }
   writeFileSync(netPath, netSrc);
 
