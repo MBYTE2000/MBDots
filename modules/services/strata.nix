@@ -66,28 +66,34 @@ let
       
       # Create wrapper script that uses the venv
       cat > $out/bin/strata << 'WRAPPER'
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+# -*- python -*-
+#
 # The strata CLI launcher using venv
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
-VENV="$SCRIPT_DIR/../venv"
-export PYTHONPATH="$LIB_DIR:$PYTHONPATH"
-exec "$VENV/bin/python" -c "
-import sys
-sys.path.insert(0, '$LIB_DIR')
+#
+import os, sys
+script_dir = os.path.dirname(os.path.realpath(__file__))
+lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
+venv_dir = os.path.normpath(os.path.join(script_dir, "..", "venv"))
+sys.path.insert(0, lib_dir)
 from strata_cli.cli import main
 main()
-" "$@"
 WRAPPER
       chmod +x $out/bin/strata
       
       # Create a convenience script to run setup.py directly
       cat > $out/bin/strata-setup << 'SETUPWRAPPER'
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+# -*- python -*-
+#
 # Run setup.py from the venv
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV="$SCRIPT_DIR/../venv"
-exec "$VENV/bin/python" "$SCRIPT_DIR/../lib/setup.py" "$@"
+#
+import os, sys
+script_dir = os.path.dirname(os.path.realpath(__file__))
+lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
+sys.path.insert(0, lib_dir)
+import runpy
+runpy.run_path(os.path.join(lib_dir, "setup.py"), run_name="__main__")
 SETUPWRAPPER
       chmod +x $out/bin/strata-setup
     '';
