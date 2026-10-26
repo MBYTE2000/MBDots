@@ -1,8 +1,10 @@
 { config, lib, pkgs, ... }:
 let
-  # Using the official flake from the Strata repository
-  strata-flake = builtins.fetchTarball {
-    url = "https://github.com/Niko1221/Strata/archive/refs/heads/main.tar.gz";
+  # Using the official Strata repository (pinned commit for reproducibility)
+  strata-flake = builtins.fetchFromGitHub {
+    owner = "Niko1221";
+    repo = "Strata";
+    rev = "main";
     sha256 = "sha256-qTvlEKKHQN4ABVoYI6qsmFiQYFOhsEEWsRPzfhbP74Q=";
   };
   
