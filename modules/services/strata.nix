@@ -62,9 +62,6 @@ from strata_cli.cli import main
 main()
 WRAPPER
       chmod +x $out/bin/strata
-      
-      # Create Python path file
-      echo "$out/lib" > $out/nix-support/python-path
     '';
   };
 in
