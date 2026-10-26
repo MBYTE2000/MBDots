@@ -18,6 +18,7 @@ let
       pkgs.uv
     ];
     
+    # All runtime dependencies from requirements.txt
     requirements = [
       "numpy"
       "jinja2"
@@ -33,6 +34,10 @@ let
       "charset-normalizer"
       "idna"
       "urllib3"
+    ];
+    
+    # Optional TUI dependencies from requirements-monitor.txt
+    optionalDependencies = [
       "textual"
       "colorama"
     ];
@@ -64,6 +69,26 @@ WRAPPER
       chmod +x $out/bin/strata
     '';
   };
+  
+  # Python environment with all Strata dependencies
+  strata-python = pkgs.python312.withPackages (ps: [
+    ps.numpy
+    ps.jinja2
+    ps.regex
+    ps.pyyaml
+    ps.tqdm
+    ps.requests
+    ps.pillow
+    ps.psutil
+    ps.markupsafe
+    ps.certifi
+    ps.truststore
+    ps."charset-normalizer"
+    ps.idna
+    ps.urllib3
+    ps.textual
+    ps.colorama
+  ]);
 in
 {
   config = lib.mkIf config.myConfig.services.strata.enable {
@@ -71,8 +96,7 @@ in
     environment.systemPackages = [
       strata-package
       pkgs.uv  # Required by Strata setup.sh on NixOS
-      (pkgs.python312.pkgs).textual  # TUI for monitor
-      (pkgs.python312.pkgs).colorama  # Color support
+      strata-python  # Python with all Strata dependencies
     ];
   };
 }
