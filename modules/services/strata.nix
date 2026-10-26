@@ -62,12 +62,22 @@ let
     
     # Install Strata CLI modules
     installPhase = ''
-      mkdir -p $out/bin $out/lib
+      mkdir -p $out/bin $out/lib $out/scripts
       cp -r strata_cli $out/lib/
       cp -r strata_control $out/lib/
       cp -r serve $out/lib/
       cp -r tools $out/lib/
       cp -r strata.py $out/lib/
+      
+      # Copy setup scripts
+      cp setup.sh $out/scripts/
+      cp setup.py $out/scripts/
+      cp strata.py $out/scripts/
+      cp requirements.txt $out/scripts/
+      cp requirements-monitor.txt $out/scripts/
+      cp update.sh $out/scripts/
+      cp bench.sh $out/scripts/
+      cp chat.py $out/scripts/
       
       # Find all site-packages in the Nix store for Python 3.12
       SITE_PACKAGES=$(find /nix/store -name "site-packages" -type d -path "*/lib/python3.12/*" 2>/dev/null | grep -v "dist-info" | tr '\n' ':')
@@ -99,6 +109,50 @@ from strata_cli.cli import main
 main()
 WRAPPER
       chmod +x $out/bin/strata
+      
+      # Create strata-setup wrapper script
+      cat > $out/bin/strata-setup << 'SETUP_WRAPPER'
+#!/usr/bin/env bash
+# strata-setup - Run Strata setup.sh from the Nix package
+# Usage: strata-setup [options]
+set -e
+
+# Find the strata package directory via the strata binary symlink
+STRATA_BIN="/run/current-system/sw/bin/strata"
+
+if [ ! -L "$STRATA_BIN" ]; then
+    echo "Error: strata binary not found at $STRATA_BIN" >&2
+    exit 1
+fi
+
+# Resolve the symlink to get the actual Nix store path
+STRATA_PKG_DIR="$(readlink -f "$STRATA_BIN")"
+STRATA_PKG_DIR="$(dirname "$STRATA_PKG_DIR")"  # Remove /bin
+STRATA_PKG_DIR="$(dirname "$STRATA_PKG_DIR")"  # Remove /bin again to get package root
+
+# Verify the scripts directory exists
+if [ ! -d "$STRATA_PKG_DIR/scripts" ]; then
+    echo "Error: scripts directory not found in $STRATA_PKG_DIR" >&2
+    exit 1
+fi
+
+# Copy scripts to a temporary directory (Nix store is read-only)
+TMP_DIR=$(mktemp -d)
+trap "rm -rf $TMP_DIR" EXIT
+
+# Copy and fix permissions
+cp -r "$STRATA_PKG_DIR/scripts" "$TMP_DIR/"
+chmod -R u+w "$TMP_DIR/scripts"
+
+cd "$TMP_DIR/scripts"
+
+# Set PYTHONPATH to include Nix store lib directory
+export PYTHONPATH="$STRATA_PKG_DIR/lib:$PYTHONPATH"
+
+# Run setup.sh with all arguments
+exec bash setup.sh "$@"
+SETUP_WRAPPER
+      chmod +x $out/bin/strata-setup
     '';
   };
 in
