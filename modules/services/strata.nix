@@ -79,14 +79,21 @@ let
 #
 # The strata CLI launcher
 #
-import os, sys
+import os, sys, subprocess
 
-# Add all Nix store site-packages to PYTHONPATH
-SITE_PACKAGES = "$(find /nix/store -name "site-packages" -type d -path "*/lib/python3.12/*" 2>/dev/null | grep -v "dist-info" | tr '\n' ':')"
-os.environ['PYTHONPATH'] = SITE_PACKAGES
+# Find all Nix store site-packages and add to PYTHONPATH
+try:
+    result = subprocess.run(
+        ['find', '/nix/store', '-name', 'site-packages', '-type', 'd', '-path', '*/lib/python3.12/*'],
+        capture_output=True, text=True, timeout=10
+    )
+    site_packages = result.stdout.strip().split('\n')
+    os.environ['PYTHONPATH'] = ':'.join(site_packages)
+except:
+    pass
 
 # Add Strata lib directory
-lib_dir = "$out/lib"
+lib_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "lib")
 sys.path.insert(0, lib_dir)
 from strata_cli.cli import main
 main()
