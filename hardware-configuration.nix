@@ -16,10 +16,12 @@
   fileSystems."/" =
     { device = "/dev/mapper/crypted";
       fsType = "btrfs";
-      options = [ "subvol=root" ];
+      options = [ "subvol=root" "compress=zstd" "noatime" ];
     };
 
-  boot.initrd.luks.devices."crypted".device = "/dev/disk/by-uuid/4f7e6dc4-b80e-4872-8d31-7f407aa3a3c9";
+  # Samsung SSD 970 EVO Plus 1TB — nvme0n1p2 (текущий системный диск).
+  # Старый ADATA LEGEND 710 имел UUID 4f7e6dc4-b80e-4872-8d31-7f407aa3a3c9.
+  boot.initrd.luks.devices."crypted".device = "/dev/disk/by-uuid/9e9de1da-843a-40eb-aaef-9569609ccc94";
 
   fileSystems."/.swapvol" =
     { device = "/dev/mapper/crypted";
@@ -28,7 +30,7 @@
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/02B0-82A7";
+    { device = "/dev/disk/by-uuid/12CE-A600";   # ESP на nvme0n1p1 (старый был 02B0-82A7)
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
@@ -36,16 +38,19 @@
   fileSystems."/home" =
     { device = "/dev/mapper/crypted";
       fsType = "btrfs";
-      options = [ "subvol=home" ];
+      options = [ "subvol=home" "compress=zstd" "noatime" ];
     };
 
   fileSystems."/nix" =
     { device = "/dev/mapper/crypted";
       fsType = "btrfs";
-      options = [ "subvol=nix" ];
+      options = [ "subvol=nix" "compress=zstd" "noatime" ];
     };
 
-  swapDevices = [ ];
+  # disko.nix создал 8G swapfile на subvol=swap, но swapDevices был пуст —
+  # после установки swap не поднимался (swapon --show был пустой).
+  # Без compress/noatime на /.swapvol: btrfs не умеет swapfile на сжатом subvol.
+  swapDevices = [ { device = "/.swapvol/swapfile"; } ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

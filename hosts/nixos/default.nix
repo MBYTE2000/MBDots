@@ -16,8 +16,9 @@
     services = {
       # Сервисы, выключенные по умолчанию. Раскомментируй нужное:
       #docker.enable  = true;   # включает docker.service (не автозапуск)
-      ollama.enable   = true;   # ollama CLI с CUDA; daemon поднимает run-qwen или вручную
-      #comfyui.enable = true;   # требует раскомментировать comfyui-nix в flake.nix
+      llama-cpp.enable   = true; # 
+      strata.enable      = true; # Strata CLI
+      comfyui.enable = true;   # требует раскомментировать comfyui-nix в flake.nix
       #wazuh.enable   = true;   # SIEM-агент (после ставить `wazuh-setup`)
       #ssh.enable     = true;
     };
@@ -37,13 +38,13 @@
 
     # Второй NVMe (ext4) с данными. На текущем ПК есть — на новой инсталляции
     # (один диск) установщик выставит false.
-    hardware.dataDisk.enable = true;
+    hardware.dataDisk.enable = false;
 
     # Категории "крупных" групп. Установщик соберёт их по чекбоксам.
     categories = {
       dev.enable        = true;
       gaming.enable     = true;
-      ai.enable         = true;
+      #ai.enable         = true;
       multimedia.enable = true;
       office.enable     = true;
       comms.enable      = true;
@@ -55,7 +56,7 @@
   environment.systemPackages = [
     inputs.prismlauncher.packages.${pkgs.system}.prismlauncher
     inputs.freesmlauncher.packages.${pkgs.system}.freesmlauncher
-    inputs.vintagestory.packages.${pkgs.system}.default
+    #inputs.vintagestory.packages.${pkgs.system}.default
   ];
 
   system.stateVersion = "25.05";

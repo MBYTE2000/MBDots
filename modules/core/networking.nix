@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  networking.hostName = "nixos";
+  networking.hostName = "MB-PC";
   networking.networkmanager.enable = true;
 
   networking.networkmanager.ensureProfiles.profiles = {
@@ -17,4 +17,6 @@
       };
     };
   };
+  networking.hosts."127.0.0.1" = [ "MB-PC.local" ];
+
 }

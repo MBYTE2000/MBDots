@@ -18,7 +18,9 @@ in
     esptool
     rns
     python3Packages.huggingface-hub
-    opencode
+    freecad
+    godot
+    godot-mcp
   ]
   # ----- Multimedia -----
   ++ lib.optionals c.multimedia.enable [

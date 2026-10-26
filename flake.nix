@@ -32,7 +32,7 @@
     };
 
     claude-code.url = "github:sadjow/claude-code-nix";
-    vintagestory.url = "github:MBYTE2000/VintageStoryFplaysu";
+    #vintagestory.url = "github:MBYTE2000/VintageStoryFplaysu";
 
     #comfyui-nix.url = "github:utensils/comfyui-nix";
     deepseek-harness.url = "github:Moraxyc/deepseek-harness.nix";
@@ -52,7 +52,7 @@
   let
     system = "x86_64-linux";
   in {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.MB-PC = nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = { inherit inputs; };
       modules = [

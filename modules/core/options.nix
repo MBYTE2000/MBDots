@@ -6,7 +6,8 @@
   options.myConfig = {
     services = {
       docker.enable   = lib.mkEnableOption "Docker (по требованию, не автозапуск)";
-      ollama.enable   = lib.mkEnableOption "Ollama (LLM runner c CUDA)";
+      llama-cpp.enable   = lib.mkEnableOption "llama-cpp (LLM runner c CUDA)";
+      strata.enable      = lib.mkEnableOption "Strata (LLM CLI)";
       comfyui.enable  = lib.mkEnableOption "ComfyUI (Stable Diffusion UI)";
       wazuh.enable    = lib.mkEnableOption "Wazuh agent (SIEM/EDR)";
       ssh.enable      = lib.mkEnableOption "OpenSSH server";
@@ -41,7 +42,7 @@
     categories = {
       dev.enable        = lib.mkEnableOption "Dev tools (nvim/texlive/rust/python)"       // { default = true; };
       gaming.enable     = lib.mkEnableOption "Gaming (steam/proton/lutris/launchers)"     // { default = true; };
-      ai.enable         = lib.mkEnableOption "AI/ML (ollama+cuda/huggingface/run-qwen)"   // { default = true; };
+      #ai.enable         = lib.mkEnableOption "AI/ML (ollama+cuda/huggingface/run-qwen)"   // { default = true; };
       multimedia.enable = lib.mkEnableOption "Multimedia (gimp/kdenlive/vlc/chromium)"    // { default = true; };
       office.enable     = lib.mkEnableOption "Office (onlyoffice/okular)"                 // { default = true; };
       comms.enable      = lib.mkEnableOption "Communications (vesktop/materialgram)"      // { default = true; };

@@ -23,10 +23,10 @@
       edit  = "sudo -e";
 
       # === Пересборка системы ===
-      update       = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
-      update-test  = "sudo nixos-rebuild test  --flake /etc/nixos#nixos";
-      update-build = "sudo nixos-rebuild build --flake /etc/nixos#nixos";
-      update-full  = "sudo nix flake update /etc/nixos && sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      update       = "sudo nixos-rebuild switch --flake /etc/nixos#MB-PC";
+      update-test  = "sudo nixos-rebuild test  --flake /etc/nixos#MB-PC";
+      update-build = "sudo nixos-rebuild build --flake /etc/nixos#MB-PC";
+      update-full  = "sudo nix flake update /etc/nixos && sudo nixos-rebuild switch --flake /etc/nixos#MB-PC";
 
       # === Откат ===
       rollback    = "sudo nixos-rebuild switch --rollback";
