@@ -38,23 +38,23 @@ let
     ];
     
     # All runtime dependencies from requirements.txt
-    requirements = [
-      "numpy"
-      "jinja2"
-      "regex"
-      "pyyaml"
-      "tqdm"
-      "requests"
-      "pillow"
-      "psutil"
-      "markupsafe"
-      "certifi"
-      "truststore"
-      "charset-normalizer"
-      "idna"
-      "urllib3"
-      "textual"
-      "colorama"
+    propagatedBuildInputs = [
+      strata-python.pkgs.numpy
+      strata-python.pkgs.jinja2
+      strata-python.pkgs.regex
+      strata-python.pkgs.pyyaml
+      strata-python.pkgs.tqdm
+      strata-python.pkgs.requests
+      strata-python.pkgs.pillow
+      strata-python.pkgs.psutil
+      strata-python.pkgs.markupsafe
+      strata-python.pkgs.certifi
+      strata-python.pkgs.truststore
+      strata-python.pkgs."charset-normalizer"
+      strata-python.pkgs.idna
+      strata-python.pkgs.urllib3
+      strata-python.pkgs.textual
+      strata-python.pkgs.colorama
     ];
     
     format = "other";
