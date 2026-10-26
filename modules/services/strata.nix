@@ -96,7 +96,17 @@ in
     environment.systemPackages = [
       strata-package
       pkgs.uv  # Required by Strata setup.sh on NixOS
-      strata-python  # Python with all Strata dependencies
     ];
+    
+    # Shell hook to add Strata Python packages to PATH
+    environment.shellInit = ''
+      # Add Strata Python environment to PATH if it exists
+      if [ -d "/nix/store" ]; then
+        STRATA_PYTHON=$(find /nix/store -name "strata-python*" -type d 2>/dev/null | head -1)
+        if [ -n "$STRATA_PYTHON" ]; then
+          export PATH="$STRATA_PYTHON/bin:$PATH"
+        fi
+      fi
+    '';
   };
 }
