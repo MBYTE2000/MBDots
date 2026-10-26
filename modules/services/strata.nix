@@ -15,7 +15,6 @@ let
     nativeBuildInputs = [ 
       (pkgs.python312.pkgs).setuptools 
       (pkgs.python312.pkgs).wheel 
-      pkgs.uv
     ];
     
     # All runtime dependencies from requirements.txt
@@ -41,17 +40,13 @@ let
     format = "other";
     dontBuild = true;
     
-    # Run setup.sh to create venv with all dependencies
+    # Install Strata CLI and its dependencies
     installPhase = ''
-      # Create virtual environment using uv
-      uv venv --managed-python --seed --python 3.12 .venv
+      # Create virtual environment using python3 -m venv
+      python3 -m venv .venv
       
-      # Activate venv and run setup.py in "venv-only" mode (no downloads)
-      # We only need the Python environment, not the engine/model downloads
-      source .venv/bin/activate
-      
-      # Install dependencies from requirements.txt
-      uv pip install -r requirements.txt
+      # Install dependencies from requirements.txt using pip
+      .venv/bin/pip install -r requirements.txt
       
       # Copy Strata modules to output
       mkdir -p $out/bin $out/lib
@@ -74,28 +69,11 @@ let
 import os, sys
 script_dir = os.path.dirname(os.path.realpath(__file__))
 lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
-venv_dir = os.path.normpath(os.path.join(script_dir, "..", "venv"))
 sys.path.insert(0, lib_dir)
 from strata_cli.cli import main
 main()
 WRAPPER
       chmod +x $out/bin/strata
-      
-      # Create a convenience script to run setup.py directly
-      cat > $out/bin/strata-setup << 'SETUPWRAPPER'
-#!/usr/bin/env python3
-# -*- python -*-
-#
-# Run setup.py from the venv
-#
-import os, sys
-script_dir = os.path.dirname(os.path.realpath(__file__))
-lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
-sys.path.insert(0, lib_dir)
-import runpy
-runpy.run_path(os.path.join(lib_dir, "setup.py"), run_name="__main__")
-SETUPWRAPPER
-      chmod +x $out/bin/strata-setup
     '';
   };
 in
