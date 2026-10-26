@@ -1,8 +1,10 @@
 { config, lib, pkgs, ... }:
 let
   # Using the official Strata repository (pinned to v0.2.6)
-  # Download the repo: git clone --branch v0.2.6 https://github.com/Niko1221/Strata.git
-  strata-src = /tmp/strata-v0.2.6;
+  strata-src = pkgs.fetchurl {
+    url = "https://github.com/Niko1221/Strata/archive/refs/tags/v0.2.6.tar.gz";
+    sha256 = "sha256-d4AFr2b+EW+keFN9vaKse8lkGR0r0m+7OqBr+CPHwvw=";
+  };
   
   # Build Strata as a Python application
   strata-package = (pkgs.python312.pkgs).buildPythonApplication {
