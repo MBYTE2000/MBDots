@@ -1,10 +1,10 @@
 { config, lib, pkgs, ... }:
 let
-  # Using the official Strata repository (pinned to v0.2.6 tag)
+  # Using the official Strata repository (pinned to v0.2.6 tag commit)
   strata-flake = pkgs.fetchFromGitHub {
     owner = "Niko1221";
     repo = "Strata";
-    rev = "v0.2.6";
+    rev = "4b9e05a2a806a3fe24f7b2560d98626c37dade35";
     sha256 = "sha256-d4AFr2b+EW+keFN9vaKse8lkGR0r0m+7OqBr+CPHwvw=";
   };
   
