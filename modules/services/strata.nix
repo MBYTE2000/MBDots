@@ -67,6 +67,7 @@ in
     # Strata CLI in PATH
     environment.systemPackages = [
       strata-package
+      pkgs.uv  # Required by Strata setup.sh on NixOS
     ];
   };
 }
