@@ -1,9 +1,9 @@
 { config, lib, pkgs, ... }:
 let
-  # Использу the official flake from the Strata repository
+  # Using the official flake from the Strata repository
   strata-flake = builtins.fetchTarball {
     url = "https://github.com/Niko1221/Strata/archive/refs/heads/main.tar.gz";
-    hash = "sha256-qTvlEKKHQN4ABVoYI6qsmFiQYFOhsEEWsRPzfhbP74Q=";
+    sha256 = "sha256-qTvlEKKHQN4ABVoYI6qsmFiQYFOhsEEWsRPzfhbP74Q=";
   };
   
   # Build Strata as a Python application
