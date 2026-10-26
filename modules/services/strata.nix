@@ -34,10 +34,6 @@ let
       "charset-normalizer"
       "idna"
       "urllib3"
-    ];
-    
-    # Optional TUI dependencies from requirements-monitor.txt
-    optionalDependencies = [
       "textual"
       "colorama"
     ];
@@ -45,7 +41,19 @@ let
     format = "other";
     dontBuild = true;
     
+    # Run setup.sh to create venv with all dependencies
     installPhase = ''
+      # Create virtual environment using uv
+      uv venv --managed-python --seed --python 3.12 .venv
+      
+      # Activate venv and run setup.py in "venv-only" mode (no downloads)
+      # We only need the Python environment, not the engine/model downloads
+      source .venv/bin/activate
+      
+      # Install dependencies from requirements.txt
+      uv pip install -r requirements.txt
+      
+      # Copy Strata modules to output
       mkdir -p $out/bin $out/lib
       cp -r strata_cli $out/lib/
       cp -r strata_control $out/lib/
@@ -53,42 +61,37 @@ let
       cp -r tools $out/lib/
       cp -r strata.py $out/lib/
       
+      # Copy venv to output
+      cp -r .venv $out/venv
+      
+      # Create wrapper script that uses the venv
       cat > $out/bin/strata << 'WRAPPER'
-#!/usr/bin/env python3
-# -*- python -*-
-#
-# The strata CLI launcher.
-#
-import os, sys
-script_dir = os.path.dirname(os.path.realpath(__file__))
-lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
-sys.path.insert(0, lib_dir)
+#!/usr/bin/env bash
+# The strata CLI launcher using venv
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
+VENV="$SCRIPT_DIR/../venv"
+export PYTHONPATH="$LIB_DIR:$PYTHONPATH"
+exec "$VENV/bin/python" -c "
+import sys
+sys.path.insert(0, '$LIB_DIR')
 from strata_cli.cli import main
 main()
+" "$@"
 WRAPPER
       chmod +x $out/bin/strata
+      
+      # Create a convenience script to run setup.py directly
+      cat > $out/bin/strata-setup << 'SETUPWRAPPER'
+#!/usr/bin/env bash
+# Run setup.py from the venv
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV="$SCRIPT_DIR/../venv"
+exec "$VENV/bin/python" "$SCRIPT_DIR/../lib/setup.py" "$@"
+SETUPWRAPPER
+      chmod +x $out/bin/strata-setup
     '';
   };
-  
-  # Python environment with all Strata dependencies
-  strata-python = pkgs.python312.withPackages (ps: [
-    ps.numpy
-    ps.jinja2
-    ps.regex
-    ps.pyyaml
-    ps.tqdm
-    ps.requests
-    ps.pillow
-    ps.psutil
-    ps.markupsafe
-    ps.certifi
-    ps.truststore
-    ps."charset-normalizer"
-    ps.idna
-    ps.urllib3
-    ps.textual
-    ps.colorama
-  ]);
 in
 {
   config = lib.mkIf config.myConfig.services.strata.enable {
@@ -97,16 +100,5 @@ in
       strata-package
       pkgs.uv  # Required by Strata setup.sh on NixOS
     ];
-    
-    # Shell hook to add Strata Python packages to PATH
-    environment.shellInit = ''
-      # Add Strata Python environment to PATH if it exists
-      if [ -d "/nix/store" ]; then
-        STRATA_PYTHON=$(find /nix/store -name "strata-python*" -type d 2>/dev/null | head -1)
-        if [ -n "$STRATA_PYTHON" ]; then
-          export PATH="$STRATA_PYTHON/bin:$PATH"
-        fi
-      fi
-    '';
   };
 }
