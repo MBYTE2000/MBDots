@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 let
-  # Using the official Strata repository (pinned commit for reproducibility)
-  strata-flake = builtins.fetchFromGitHub {
+  # Using the official Strata repository
+  strata-flake = pkgs.fetchFromGitHub {
     owner = "Niko1221";
     repo = "Strata";
     rev = "main";
