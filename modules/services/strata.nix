@@ -74,12 +74,8 @@ in
     environment.systemPackages = [
       strata-package
       pkgs.uv  # Required by Strata setup.sh on NixOS
-    ];
-    
-    # Python packages for Strata TUI (monitor)
-    environment.python3Packages = with pkgs.python312Packages; [
-      textual
-      colorama
+      (pkgs.python312.pkgs).textual  # TUI for monitor
+      (pkgs.python312.pkgs).colorama  # Color support
     ];
   };
 }
