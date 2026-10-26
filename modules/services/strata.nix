@@ -6,15 +6,35 @@ let
     sha256 = "sha256-xlDX6DNXuOkWQ6Ea+4fDcZ7onVtKQVlMFll4OhjAnMI=";
   };
   
+  # Python environment with all Strata dependencies
+  strata-python = pkgs.python312.withPackages (ps: [
+    ps.numpy
+    ps.jinja2
+    ps.regex
+    ps.pyyaml
+    ps.tqdm
+    ps.requests
+    ps.pillow
+    ps.psutil
+    ps.markupsafe
+    ps.certifi
+    ps.truststore
+    ps."charset-normalizer"
+    ps.idna
+    ps.urllib3
+    ps.textual
+    ps.colorama
+  ]);
+  
   # Build Strata as a Python application
-  strata-package = (pkgs.python312.pkgs).buildPythonApplication {
+  strata-package = strata-python.pkgs.buildPythonApplication {
     pname = "strata";
     version = "0.1.51";
     src = strata-src;
     
     nativeBuildInputs = [ 
-      (pkgs.python312.pkgs).setuptools 
-      (pkgs.python312.pkgs).wheel 
+      strata-python.pkgs.setuptools 
+      strata-python.pkgs.wheel 
     ];
     
     # All runtime dependencies from requirements.txt
@@ -40,15 +60,8 @@ let
     format = "other";
     dontBuild = true;
     
-    # Install Strata CLI and its dependencies
+    # Install Strata CLI modules
     installPhase = ''
-      # Create virtual environment using python3 -m venv
-      python3 -m venv .venv
-      
-      # Install dependencies from requirements.txt using pip
-      .venv/bin/pip install -r requirements.txt
-      
-      # Copy Strata modules to output
       mkdir -p $out/bin $out/lib
       cp -r strata_cli $out/lib/
       cp -r strata_control $out/lib/
@@ -56,15 +69,12 @@ let
       cp -r tools $out/lib/
       cp -r strata.py $out/lib/
       
-      # Copy venv to output
-      cp -r .venv $out/venv
-      
-      # Create wrapper script that uses the venv
+      # Create wrapper script
       cat > $out/bin/strata << 'WRAPPER'
 #!/usr/bin/env python3
 # -*- python -*-
 #
-# The strata CLI launcher using venv
+# The strata CLI launcher
 #
 import os, sys
 script_dir = os.path.dirname(os.path.realpath(__file__))
