@@ -1,11 +1,11 @@
 { config, lib, pkgs, ... }:
 let
-  # Using the official Strata repository
+  # Using the official Strata repository (pinned to v0.2.6 tag)
   strata-flake = pkgs.fetchFromGitHub {
     owner = "Niko1221";
     repo = "Strata";
-    rev = "main";
-    sha256 = "sha256-qTvlEKKHQN4ABVoYI6qsmFiQYFOhsEEWsRPzfhbP74Q=";
+    rev = "v0.2.6";
+    sha256 = "sha256-d4AFr2b+EW+keFN9vaKse8lkGR0r0m+7OqBr+CPHwvw=";
   };
   
   # Build Strata as a Python application
