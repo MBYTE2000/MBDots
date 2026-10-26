@@ -69,7 +69,7 @@ let
       cp -r tools $out/lib/
       cp -r strata.py $out/lib/
       
-      # Create wrapper script
+      # Create wrapper script that sets PYTHONPATH
       cat > $out/bin/strata << 'WRAPPER'
 #!/usr/bin/env python3
 # -*- python -*-
@@ -77,8 +77,25 @@ let
 # The strata CLI launcher
 #
 import os, sys
+
+# Add Nix store Python packages to PYTHONPATH
 script_dir = os.path.dirname(os.path.realpath(__file__))
 lib_dir = os.path.normpath(os.path.join(script_dir, "..", "lib"))
+
+# Find all site-packages directories in the Nix store
+nix_store = "/nix/store"
+python_packages = []
+for root, dirs, files in os.walk(nix_store):
+    if "site-packages" in dirs:
+        for dir_name in dirs:
+            if dir_name == "site-packages":
+                python_packages.append(os.path.join(root, dir_name))
+                break
+
+# Add all found site-packages to PYTHONPATH
+if python_packages:
+    sys.path.extend(python_packages)
+
 sys.path.insert(0, lib_dir)
 from strata_cli.cli import main
 main()
