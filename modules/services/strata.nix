@@ -62,6 +62,9 @@ from strata_cli.cli import main
 main()
 WRAPPER
       chmod +x $out/bin/strata
+      
+      # Create Python path file
+      echo "$out/lib" > $out/nix-support/python-path
     '';
   };
 in
@@ -71,6 +74,12 @@ in
     environment.systemPackages = [
       strata-package
       pkgs.uv  # Required by Strata setup.sh on NixOS
+    ];
+    
+    # Python packages for Strata TUI (monitor)
+    environment.python3Packages = with pkgs.python312Packages; [
+      textual
+      colorama
     ];
   };
 }
