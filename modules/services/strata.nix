@@ -39,14 +39,12 @@ let
     
     installPhase = ''
       mkdir -p $out/bin $out/lib
-      
-      # Copy Python modules
       cp -r strata_cli $out/lib/
       cp -r strata_control $out/lib/
       cp -r serve $out/lib/
+      cp -r tools $out/lib/
       cp -r strata.py $out/lib/
       
-      # Create Python wrapper
       cat > $out/bin/strata << 'WRAPPER'
 #!/usr/bin/env python3
 # -*- python -*-
