@@ -51,11 +51,12 @@ in
   # ----- Dev -----
   ++ lib.optionals c.dev.enable [
     texlive.combined.scheme-full
-  ]
+    nvitop
+  ];
   # ----- AI/ML (CLI tooling; ollama-cuda ставит modules/services/ollama.nix) -----
-  ++ lib.optionals c.ai.enable [
-    nvitop             # GPU-мониторинг
+  #++ lib.optionals c.ai.enable [
+  #  nvitop             # GPU-мониторинг
     # python3Packages.huggingface-hub оставлен в core — он всегда полезен
     # (не только для AI).
-  ];
+  #];
 }

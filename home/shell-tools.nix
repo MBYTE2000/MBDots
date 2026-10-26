@@ -31,4 +31,16 @@
     enableZshIntegration = true;
     options = [ "--cmd cd" ];   # z → cd; оригинальный cd остаётся как `\cd`
   };
+  programs.ssh = {
+  enable = true;
+  enableDefaultConfig = false;
+
+  settings = {
+    "*" = {
+      SetEnv = {
+        TERM = "xterm-256color";
+      };
+    };
+  };
+};
 }

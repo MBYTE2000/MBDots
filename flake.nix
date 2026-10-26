@@ -34,7 +34,7 @@
     claude-code.url = "github:sadjow/claude-code-nix";
     #vintagestory.url = "github:MBYTE2000/VintageStoryFplaysu";
 
-    #comfyui-nix.url = "github:utensils/comfyui-nix";
+    comfyui-nix.url = "github:utensils/comfyui-nix";
     deepseek-harness.url = "github:Moraxyc/deepseek-harness.nix";
   };
 
@@ -45,7 +45,7 @@
     stylix,
     claude-code,
     minegrub-theme,
-    #comfyui-nix,
+    comfyui-nix,
     deepseek-harness,
     ...
   }:
@@ -60,7 +60,7 @@
         stylix.nixosModules.stylix
 
         # Опциональные внешние модули
-        #comfyui-nix.nixosModules.default
+        comfyui-nix.nixosModules.default
         deepseek-harness.nixosModules.default
         minegrub-theme.nixosModules.default
 

@@ -24,13 +24,13 @@
       window-decoration = false;              # без CSD — niri сам рисует рамку
 
       # Шрифт задаёт stylix; размер по умолчанию берётся из stylix.fonts.sizes.terminal.
-
+      shell-integration-features = "no-cursor,ssh-env,ssh-terminfo";
       # Управление
       copy-on-select = true;
       mouse-hide-while-typing = true;
       cursor-style = "block";
       cursor-style-blink = false;
-      shell-integration-features = "no-cursor";
+      #shell-integration-features = "no-cursor";
 
       # Скрыть панель заголовка, если Ghostty решит рисовать через GTK
       gtk-titlebar = false;

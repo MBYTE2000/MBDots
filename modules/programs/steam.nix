@@ -25,4 +25,28 @@ lib.mkIf config.myConfig.categories.gaming.enable {
   # gamescope — компоновщик от Valve для гейминга (SteamDeck-style HUD, FSR upscale).
   # Запуск: `gamescope -f -- steam` или через Steam launch options.
   programs.gamescope.enable = true;
+
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      # GUI-стек, нужный yad
+      gtk3
+      gdk-pixbuf
+
+      # Базовые библиотеки, которые обычно просят бинарники
+      zlib
+      stdenv.cc.cc
+      glib
+      cairo
+      pango
+      atk
+      fontconfig
+      dbus
+      freetype
+      xorg.libX11
+      xorg.libXext
+      xorg.libxcb
+    ];
+  };
 }
+

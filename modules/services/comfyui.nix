@@ -18,14 +18,14 @@
     systemd.services.comfyui.wantedBy = lib.mkForce [];
 
     # Расширенная конфигурация (comfyui-nix), раскомментируй когда подключишь модуль:
-    # services.comfyui = {
-    #   gpuSupport = "cuda";
-    #   enableManager = true;
-    #   port = 8188;
-    #   listenAddress = "127.0.0.1";
-    #   user = "mbyte";
-    #   group = "users";
-    #   createUser = false;
-    # };
+     services.comfyui = {
+       gpuSupport = "cuda";
+       enableManager = true;
+       port = 8188;
+       listenAddress = "127.0.0.1";
+       user = "mbyte";
+       group = "users";
+       createUser = false;
+     };
   };
 }
