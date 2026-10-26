@@ -15,6 +15,7 @@ let
     nativeBuildInputs = [ 
       (pkgs.python312.pkgs).setuptools 
       (pkgs.python312.pkgs).wheel 
+      pkgs.uv
     ];
     
     requirements = [
@@ -32,6 +33,8 @@ let
       "charset-normalizer"
       "idna"
       "urllib3"
+      "textual"
+      "colorama"
     ];
     
     format = "other";
