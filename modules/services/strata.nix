@@ -1,9 +1,10 @@
 { config, lib, pkgs, ... }:
 let
-  # Using the official Strata repository (pinned to v0.2.6)
-  strata-src = pkgs.fetchurl {
-    url = "https://github.com/Niko1221/Strata/archive/refs/tags/v0.2.6.tar.gz";
-    sha256 = "sha256-d4AFr2b+EW+keFN9vaKse8lkGR0r0m+7OqBr+CPHwvw=";
+  # Using the official Strata repository (pinned to v0.2.6 tag)
+  strata-src = pkgs.fetchFromGitHub {
+    owner = "Niko1221";
+    repo = "Strata";
+    rev = "v0.2.6";
   };
   
   # Build Strata as a Python application
