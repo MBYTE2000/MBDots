@@ -73,7 +73,7 @@ let
       SITE_PACKAGES=$(find /nix/store -name "site-packages" -type d -path "*/lib/python3.12/*" 2>/dev/null | grep -v "dist-info" | tr '\n' ':')
       
       # Create wrapper script that uses the venv
-      cat > $out/bin/strata << WRAPPER
+      cat > $out/bin/strata << 'WRAPPER'
 #!/usr/bin/env python3
 # -*- python -*-
 #
@@ -82,7 +82,8 @@ let
 import os, sys
 
 # Add all Nix store site-packages to PYTHONPATH
-os.environ['PYTHONPATH'] = "${SITE_PACKAGES}"
+SITE_PACKAGES = "$(find /nix/store -name "site-packages" -type d -path "*/lib/python3.12/*" 2>/dev/null | grep -v "dist-info" | tr '\n' ':')"
+os.environ['PYTHONPATH'] = SITE_PACKAGES
 
 # Add Strata lib directory
 lib_dir = "$out/lib"
