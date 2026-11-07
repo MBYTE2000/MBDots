@@ -25,8 +25,8 @@ binds {
     // Mod+F занят maximize-column ниже; nvim через терминал (`n` в zsh).
 
     // === Noctalia IPC ===
-    Mod+A hotkey-overlay-title="App Launcher: noctalia"     { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Super+Alt+L hotkey-overlay-title="Lock Screen: noctalia" { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
+    Mod+A hotkey-overlay-title="App Launcher: noctalia"     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Super+Alt+L hotkey-overlay-title="Lock Screen: noctalia" { spawn "noctalia" "msg" "session" "lock"; }
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).

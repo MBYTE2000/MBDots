@@ -1,9 +1,11 @@
-{ ... }:
+{ config, ... }:
 # Zsh под home-manager. Оно генерит ~/.zshrc и подтягивает integrations
 # от других модулей: starship, zoxide, ghostty shell-hooks.
 {
   programs.zsh = {
     enable = true;
+    # Явно держим ~/.zshrc в $HOME (в HM дефолт меняется на XDG).
+    dotDir = config.home.homeDirectory;
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
@@ -33,7 +35,7 @@
       generations = "sudo nix-env --list-generations --profile /nix/var/nix/profiles/system";
       gen-diff    = "nvd diff /run/current-system /nix/var/nix/profiles/system-*-link 2>/dev/null | tail -50";
 
-      restart-noctalia = "pkill -f noctalia-shell && sleep 1 && nohup noctalia-shell > /dev/null 2>&1 &";
+      restart-noctalia = "pkill -f \"^/etc/profiles/per-user/$USER/bin/noctalia\\$\"; sleep 1; niri msg action spawn -- noctalia";
 
       # dsh: NixOS-модуль префиксует профили (nix-tui / nix-web), а не tui/web.
       # Короткие алиасы — чтобы не вспоминать это каждый раз.

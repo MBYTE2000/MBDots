@@ -1,6 +1,8 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 {
   programs.nixvim = {
+    # nixvim следует нашему nixpkgs (follows в flake.nix) — фиксируем это явно.
+    nixpkgs.source = inputs.nixpkgs;
     enable = true;
 
     globals.mapleader = " ";  # <Space> — для <Leader>ac и подобных из claudecode

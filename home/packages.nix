@@ -50,7 +50,7 @@ in
   ]
   # ----- Dev -----
   ++ lib.optionals c.dev.enable [
-    texlive.combined.scheme-full
+    texliveFull
     nvitop
   ];
   # ----- AI/ML (CLI tooling; ollama-cuda ставит modules/services/ollama.nix) -----

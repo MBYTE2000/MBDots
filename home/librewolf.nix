@@ -8,6 +8,8 @@
   programs.firefox = {
     enable = true;
     package = pkgs.librewolf;
+    # Явно держим прежний путь профиля (в HM дефолт сменился на XDG).
+    configPath = ".mozilla/firefox";
 
     policies = {
       ExtensionSettings = {
@@ -54,16 +56,19 @@
         "webgl.disabled" = true;
         "extensions.autoDisableScopes" = 0;
       };
-      bookmarks = [
-        { name = "NixOS"; url = "https://nixos.org/"; }
-        "separator"
-        { name = "Поисковики";
-          bookmarks = [
-            { name = "Поиск по Nixpkgs"; url = "https://search.nixos.org/packages?query=%s"; }
-            { name = "Home Manager";     url = "https://nix-community.github.io/home-manager/"; }
-          ];
-        }
-      ];
+      bookmarks = {
+        force = true;
+        settings = [
+          { name = "NixOS"; url = "https://nixos.org/"; }
+          "separator"
+          { name = "Поисковики";
+            bookmarks = [
+              { name = "Поиск по Nixpkgs"; url = "https://search.nixos.org/packages?query=%s"; }
+              { name = "Home Manager";     url = "https://nix-community.github.io/home-manager/"; }
+            ];
+          }
+        ];
+      };
       search = {
         default = "google";
         engines = {

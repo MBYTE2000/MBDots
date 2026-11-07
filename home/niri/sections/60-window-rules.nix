@@ -51,4 +51,23 @@ window-rule {
 window-rule {
     draw-border-with-background false
 }
+
+// Терминал открывается чуть шире стандартной половины экрана.
+window-rule {
+    match app-id=r#"^com\.mitchellh\.ghostty$"#
+    default-column-width { proportion 0.6; }
+}
+
+// Окно настроек Noctalia v5 — плавающее (рекомендация noctalia для niri).
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// Нужно Noctalia v5 для действий в уведомлениях и активации окон.
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
 ''

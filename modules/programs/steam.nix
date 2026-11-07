@@ -43,9 +43,9 @@ lib.mkIf config.myConfig.categories.gaming.enable {
       fontconfig
       dbus
       freetype
-      xorg.libX11
-      xorg.libXext
-      xorg.libxcb
+      libx11
+      libxext
+      libxcb
     ];
   };
 }

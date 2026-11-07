@@ -27,7 +27,6 @@
   };
 
   boot.plymouth.enable = true;
-  boot.initrd.systemd.enable = true;
   boot.kernelParams = [ "quiet" "splash" ];
 
   boot.initrd.systemd.services.plymouth-start = {

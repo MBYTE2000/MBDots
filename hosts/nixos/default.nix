@@ -54,9 +54,9 @@
 
   # Пакеты из flake-inputs, доступные глобально
   environment.systemPackages = [
-    inputs.prismlauncher.packages.${pkgs.system}.prismlauncher
-    inputs.freesmlauncher.packages.${pkgs.system}.freesmlauncher
-    #inputs.vintagestory.packages.${pkgs.system}.default
+    inputs.prismlauncher.packages.${pkgs.stdenv.hostPlatform.system}.prismlauncher
+    inputs.freesmlauncher.packages.${pkgs.stdenv.hostPlatform.system}.freesmlauncher
+    #inputs.vintagestory.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   system.stateVersion = "25.05";
